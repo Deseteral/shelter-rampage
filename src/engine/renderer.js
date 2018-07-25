@@ -3,6 +3,7 @@ function createRenderer(width, height, instance) {
   canvas.width = width;
   canvas.height = height;
   instance.renderer = canvas;
+  canvas.requestPointerLock();
   document.body.appendChild(canvas);
 }
 

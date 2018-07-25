@@ -151,26 +151,56 @@ function update() {
   const keyState = getKeyState();
 
   if (keyState.up) {
-    if (MAP[Math.floor(pos.x + (dir.x * moveSpeed))][Math.floor(pos.y)] === 0) {
-      pos.x += dir.x * moveSpeed;
+    const dx = pos.x + (dir.x * moveSpeed);
+    const dy = pos.y + (dir.y * moveSpeed);
+    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
+      pos.x = dx;
     }
 
-    if (MAP[Math.floor(pos.x)][Math.floor(pos.y + (dir.y * moveSpeed))] === 0) {
-      pos.y += dir.y * moveSpeed;
+    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
+      pos.y = dy;
     }
   }
 
   if (keyState.down) {
-    if (MAP[Math.floor(pos.x - (dir.x * moveSpeed))][Math.floor(pos.y)] === 0) {
-      pos.x -= dir.x * moveSpeed;
+    const dx = pos.x - (dir.x * moveSpeed);
+    const dy = pos.y - (dir.y * moveSpeed);
+    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
+      pos.x = dx;
     }
 
-    if (MAP[Math.floor(pos.x)][Math.floor(pos.y - (dir.y * moveSpeed))] === 0) {
-      pos.y -= dir.y * moveSpeed;
+    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
+      pos.y = dy;
     }
   }
 
+  const rot = { x: -1 * dir.y, y: dir.x };
+
   if (keyState.right) {
+    const dx = pos.x - (rot.x * moveSpeed * 0.5);
+    const dy = pos.y - (rot.y * moveSpeed * 0.5);
+    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
+      pos.x = dx;
+    }
+
+    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
+      pos.y = dy;
+    }
+  }
+
+  if (keyState.left) {
+    const dx = pos.x + (rot.x * moveSpeed * 0.5);
+    const dy = pos.y + (rot.y * moveSpeed * 0.5);
+    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
+      pos.x = dx;
+    }
+
+    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
+      pos.y = dy;
+    }
+  }
+
+  if (keyState.rotateRight) {
     const oldDirX = parseFloat(dir.x);
     dir.x = (dir.x * Math.cos(-rotSpeed)) - (dir.y * Math.sin(-rotSpeed));
     dir.y = (oldDirX * Math.sin(-rotSpeed)) + (dir.y * Math.cos(-rotSpeed));
@@ -179,7 +209,7 @@ function update() {
     plane.y = (oldPlaneX * Math.sin(-rotSpeed)) + (plane.y * Math.cos(-rotSpeed));
   }
 
-  if (keyState.left) {
+  if (keyState.rotateLeft) {
     const oldDirX = dir.x;
     dir.x = (dir.x * Math.cos(rotSpeed)) - (dir.y * Math.sin(rotSpeed));
     dir.y = (oldDirX * Math.sin(rotSpeed)) + (dir.y * Math.cos(rotSpeed));
