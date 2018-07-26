@@ -1,4 +1,4 @@
-const keyState = {
+let state = {
   up: false,
   down: false,
   left: false,
@@ -7,33 +7,21 @@ const keyState = {
   rotateRight: false,
 };
 
-const KEY_CODE_A = 65;
-const KEY_CODE_W = 87;
-const KEY_CODE_D = 68;
-const KEY_CODE_S = 83;
-const KEY_CODE_LEFT = 37;
-const KEY_CODE_RIGHT = 39;
+let KEY_CODES = {
+  87: 'up',
+  83: 'down',
+  65: 'left',
+  68: 'right',
+  37: 'rotateLeft',
+  39: 'rotateRight',
+};
 
-document.addEventListener('keydown', (event) => {
-  if (event.keyCode === KEY_CODE_W) keyState.up = true;
-  if (event.keyCode === KEY_CODE_S) keyState.down = true;
-  if (event.keyCode === KEY_CODE_A) keyState.left = true;
-  if (event.keyCode === KEY_CODE_D) keyState.right = true;
-  if (event.keyCode === KEY_CODE_LEFT) keyState.rotateLeft = true;
-  if (event.keyCode === KEY_CODE_RIGHT) keyState.rotateRight = true;
+document.addEventListener('keydown', e => {
+  state[KEY_CODES[e.keyCode]] = true;
 });
 
-document.addEventListener('keyup', (event) => {
-  if (event.keyCode === KEY_CODE_W) keyState.up = false;
-  if (event.keyCode === KEY_CODE_S) keyState.down = false;
-  if (event.keyCode === KEY_CODE_A) keyState.left = false;
-  if (event.keyCode === KEY_CODE_D) keyState.right = false;
-  if (event.keyCode === KEY_CODE_LEFT) keyState.rotateLeft = false;
-  if (event.keyCode === KEY_CODE_RIGHT) keyState.rotateRight = false;
+document.addEventListener('keyup', e => {
+  state[KEY_CODES[e.keyCode]] = false;
 });
 
-function getKeyState() {
-  return keyState;
-}
-
-export default getKeyState;
+export default () => state;

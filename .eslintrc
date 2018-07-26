@@ -15,6 +15,8 @@
     "no-param-reassign": "off",
     "no-use-before-define": ["error", { "functions": false }],
     "no-console": "off",
-    "no-plusplus": "off"
+    "no-plusplus": "off",
+    "prefer-const": "off",
+    "arrow-parens": "off"
   }
 }
