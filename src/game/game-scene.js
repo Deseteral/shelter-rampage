@@ -121,18 +121,10 @@ function update() {
       drawEnd = screenHeight - 1;
     }
 
-    let color;
-    switch (MAP[mapX][mapY]) {
-      case 1: color = { r: 255, g: 255, b: 255 }; break;
-      case 2: color = { r: 255, g: 255, b: 255 }; break;
-      case 3: color = { r: 255, g: 255, b: 255 }; break;
-      case 4: color = { r: 255, g: 255, b: 255 }; break;
-      default: color = { r: 255, g: 255, b: 255 }; break;
-    }
+    let color = { r: 244, g: 0, b: 170 };
 
     let shadeFactor = (drawEnd - drawStart) / screenHeight;
-
-    shadeFactor /= 0.03125;
+    shadeFactor /= 0.03125; // 1/32
     shadeFactor = 1 - (1 / shadeFactor);
 
     color = {
