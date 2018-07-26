@@ -17,6 +17,7 @@
     "no-console": "off",
     "no-plusplus": "off",
     "prefer-const": "off",
-    "arrow-parens": "off"
+    "arrow-parens": "off",
+    "max-len": "off"
   }
 }
