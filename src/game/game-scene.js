@@ -27,12 +27,6 @@ const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
-window.gameData = {
-  pos: { x: 22, y: 12 },
-  dir: { x: -1, y: 0 },
-  plane: { x: 0, y: 0.66 },
-};
-
 function update() {
   const screenWidth = 360;
   const screenHeight = 400;
@@ -119,11 +113,11 @@ function update() {
       drawEnd = screenHeight - 1;
     }
 
-    let color = { r: 244, g: 0, b: 170 };
+    let color = { r: 24, g: 200, b: 170 };
 
-    let shadeFactor = (drawEnd - drawStart) / screenHeight;
-    shadeFactor /= 0.03125; // 1/32
-    shadeFactor = 1 - (1 / shadeFactor);
+    // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
+    let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
+    let shadeFactor = (parseInt(lightScale * 32, 10) / 32);
 
     color = {
       r: color.r * shadeFactor,
@@ -131,7 +125,7 @@ function update() {
       b: color.b * shadeFactor,
     };
 
-    const colorToString = c => `rgb(${c.r}, ${c.g}, ${c.b})`;
+    const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 
     const { gl } = engine;
     gl.fillStyle = colorToString(color);

@@ -6,6 +6,12 @@ window.engine = {
   scene: gameScene,
 };
 
+window.gameData = {
+  pos: { x: 22, y: 12 },
+  dir: { x: -1, y: 0 },
+  plane: { x: 0, y: 0.66 },
+};
+
 engine.gl = engine.c.getContext('2d');
 
 function run() {
