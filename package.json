@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "npm run dev",
-    "build": "rm -rf ./dist && webpack --config ./webpack.prod.config.js && cp ./src/index.html ./dist",
+    "build": "rm -rf ./dist && webpack --config ./webpack.prod.config.js && cp ./src/index.html ./dist && echo '<script src=\"engine.js\"></script>' >> ./dist/index.html",
     "dev": "webpack-dev-server --open",
     "size": "node ./scripts/size.js"
   },
