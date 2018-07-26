@@ -27,17 +27,15 @@ const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
-function initializeGameData() {
-  window.gameData = {
-    pos: { x: 22, y: 12 },
-    dir: { x: -1, y: 0 },
-    plane: { x: 0, y: 0.66 },
-  };
-}
+window.gameData = {
+  pos: { x: 22, y: 12 },
+  dir: { x: -1, y: 0 },
+  plane: { x: 0, y: 0.66 },
+};
 
 function update() {
-  const screenWidth = engine.renderer.width;
-  const screenHeight = engine.renderer.height;
+  const screenWidth = 360;
+  const screenHeight = 400;
   const moveSpeed = 0.1;
   const rotSpeed = 0.03;
   const { pos, dir, plane } = gameData;
@@ -135,9 +133,9 @@ function update() {
 
     const colorToString = c => `rgb(${c.r}, ${c.g}, ${c.b})`;
 
-    const ctx = engine.renderer.getContext('2d');
-    ctx.fillStyle = colorToString(color);
-    ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
+    const { gl } = engine;
+    gl.fillStyle = colorToString(color);
+    gl.fillRect(x, drawStart, 1, drawEnd - drawStart);
   }
 
   const keyState = getKeyState();
@@ -211,13 +209,6 @@ function update() {
   }
 }
 
-function render() {
-
-}
-
 export default {
   update,
-  render,
 };
-
-export { initializeGameData };
