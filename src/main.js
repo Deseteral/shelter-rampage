@@ -34,3 +34,6 @@ if (module.hot) {
     console.clear();
   });
 }
+
+
+// TODO: Make all consts - lets

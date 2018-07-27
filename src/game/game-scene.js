@@ -27,12 +27,26 @@ const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
+const texWidth = 8;
+const texHeight = 8;
+const TEX = [
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 0, 0, 1, 1, 0],
+  [0, 1, 1, 0, 0, 1, 1, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 0],
+  [0, 1, 1, 1, 1, 1, 1, 0],
+  [0, 0, 1, 1, 1, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+];
+
 function update() {
   const screenWidth = 360;
   const screenHeight = 400;
   const moveSpeed = 0.1;
   const rotSpeed = 0.03;
   const { pos, dir, plane } = gameData;
+  const { gl } = engine;
 
   for (let x = 0; x < screenWidth; x++) {
     const cameraX = ((2 * x) / screenWidth) - 1;
@@ -113,23 +127,50 @@ function update() {
       drawEnd = screenHeight - 1;
     }
 
-    let color = { r: 24, g: 200, b: 170 };
+    // TODO: Find faster way to cast to int
+    drawStart = parseInt(drawStart, 10);
+    drawEnd = parseInt(drawEnd, 10);
+
+
+    // NEW
+
+
+    // calculate value of wallX
+    let wallX; // where exactly the wall was hit
+    if (side === 0) {
+      wallX = pos.y + (perpWallDist * rayDirY);
+    } else {
+      wallX = pos.x + (perpWallDist * rayDirX);
+    }
+    wallX -= Math.floor(wallX);
+
+    // x coordinate on the texture
+    let texX = parseInt(wallX * texWidth, 10);
+    if (side === 0 && rayDirX > 0) texX = texWidth - texX - 1;
+    if (side === 1 && rayDirY < 0) texX = texWidth - texX - 1;
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
-    let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
-    let shadeFactor = (parseInt(lightScale * 32, 10) / 32);
+    // let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
+    // let shadeFactor = (parseInt(lightScale * 16, 10) / 16);
+    let shadeFactor = 1;
 
-    color = {
-      r: color.r * shadeFactor,
-      g: color.g * shadeFactor,
-      b: color.b * shadeFactor,
-    };
+    for (let y = drawStart; y < drawEnd; y++) {
+      let d = ((y * 256) - (screenHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
+      let texY = parseInt(((d * texHeight) / lineHeight) / 256, 10);
+      let textureShade = (0.5 + (TEX[texY][texX] * 0.5));
+      // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+      // if (side == 1) color = (color >> 1) & 8355711;
 
-    const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
+      let color = {
+        r: 24 * shadeFactor * textureShade,
+        g: 200 * shadeFactor * textureShade,
+        b: 170 * shadeFactor * textureShade,
+      };
 
-    const { gl } = engine;
-    gl.fillStyle = colorToString(color);
-    gl.fillRect(x, drawStart, 1, drawEnd - drawStart);
+      const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
+      gl.fillStyle = colorToString(color);
+      gl.fillRect(x, y, 1, 1);
+    }
   }
 
   const keyState = getKeyState();
