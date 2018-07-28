@@ -12,12 +12,11 @@ window.gameData = {
   plane: { x: 0, y: 0.66 },
 };
 
+// engine.gl = engine.c.getContext('2d', { alpha: false });
 engine.gl = engine.c.getContext('2d');
+engine.gl.imageSmoothingEnabled = false;
 
 function run() {
-  engine.gl.fillStyle = 'black';
-  engine.gl.fillRect(0, 0, 360, 400);
-
   engine.scene.update();
 
   window.requestAnimationFrame(run);

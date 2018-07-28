@@ -1,5 +1,7 @@
 import getKeyState from '../engine/keyboard';
 
+const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
+
 const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -29,6 +31,11 @@ const MAP = [
 
 const texWidth = 8;
 const texHeight = 8;
+const screenWidth = 90;
+const screenHeight = 100;
+const moveSpeed = 0.1;
+const rotSpeed = 0.03;
+
 const TEX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [0, 1, 1, 0, 0, 1, 1, 0],
@@ -40,13 +47,16 @@ const TEX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
+const offscreen = document.createElement('canvas');
+offscreen.width = screenWidth;
+offscreen.height = screenHeight;
+const gl = offscreen.getContext('2d');
+
 function update() {
-  const screenWidth = 360;
-  const screenHeight = 400;
-  const moveSpeed = 0.1;
-  const rotSpeed = 0.03;
   const { pos, dir, plane } = gameData;
-  const { gl } = engine;
+
+  gl.fillStyle = 'black';
+  gl.fillRect(0, 0, screenWidth, screenHeight);
 
   for (let x = 0; x < screenWidth; x++) {
     const cameraX = ((2 * x) / screenWidth) - 1;
@@ -128,8 +138,8 @@ function update() {
     }
 
     // TODO: Find faster way to cast to int
-    drawStart = parseInt(drawStart, 10);
-    drawEnd = parseInt(drawEnd, 10);
+    drawStart = Math.floor(drawStart, 10);
+    drawEnd = Math.floor(drawEnd, 10);
 
 
     // NEW
@@ -150,9 +160,9 @@ function update() {
     if (side === 1 && rayDirY < 0) texX = texWidth - texX - 1;
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
-    // let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
-    // let shadeFactor = (parseInt(lightScale * 16, 10) / 16);
-    let shadeFactor = 1;
+    let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
+    let shadeFactor = (parseInt(lightScale * 16, 10) / 16);
+    // let shadeFactor = 1;
 
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (screenHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
@@ -166,12 +176,15 @@ function update() {
         g: 200 * shadeFactor * textureShade,
         b: 170 * shadeFactor * textureShade,
       };
-
-      const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
       gl.fillStyle = colorToString(color);
       gl.fillRect(x, y, 1, 1);
     }
   }
+
+  // const im = gl.getImageData(0, 0, screenWidth, screenHeight);
+  // engine.gl.putImageData(im, 0, 0, 0, 0, 360, 400);
+  engine.gl.drawImage(offscreen, 0, 0, 360, 400);
+
 
   const keyState = getKeyState();
 
