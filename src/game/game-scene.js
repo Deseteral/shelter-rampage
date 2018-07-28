@@ -181,11 +181,10 @@ function update() {
     }
   }
 
-  // const im = gl.getImageData(0, 0, screenWidth, screenHeight);
-  // engine.gl.putImageData(im, 0, 0, 0, 0, 360, 400);
   engine.gl.drawImage(offscreen, 0, 0, 360, 400);
 
-
+  // rendering end
+  // input begin
   const keyState = getKeyState();
 
   if (keyState.up) {
