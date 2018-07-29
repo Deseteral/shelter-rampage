@@ -137,13 +137,8 @@ function update() {
       drawEnd = screenHeight - 1;
     }
 
-    // TODO: Find faster way to cast to int
     drawStart = Math.floor(drawStart, 10);
     drawEnd = Math.floor(drawEnd, 10);
-
-
-    // NEW
-
 
     // calculate value of wallX
     let wallX; // where exactly the wall was hit
