@@ -37,10 +37,12 @@ const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
+const checkMapCollision = (x, y) => MAP[x | 0][y | 0] === 0;
+
 const texWidth = 8;
 const texHeight = 8;
-const screenWidth = 90;
-const screenHeight = 100;
+const screenWidth = 180;
+const screenHeight = 200;
 const moveSpeed = 0.1;
 const rotSpeed = 0.03;
 
@@ -119,8 +121,8 @@ function update() {
     const rayDirX = dir.x + (plane.x * cameraX);
     const rayDirY = dir.y + (plane.y * cameraX);
 
-    let mapX = Math.floor(pos.x);
-    let mapY = Math.floor(pos.y);
+    let mapX = pos.x | 0;
+    let mapY = pos.y | 0;
 
     // length of ray from current position to next x or y-side
     let sideDistX;
@@ -181,7 +183,7 @@ function update() {
     }
 
     // Calculate height of line to draw on screen
-    const lineHeight = Math.floor(screenHeight / perpWallDist);
+    const lineHeight = (screenHeight / perpWallDist) | 0;
 
     // calculate lowest and highest pixel to fill in current stripe
     let drawStart = (-lineHeight / 2) + (screenHeight / 2);
@@ -193,8 +195,8 @@ function update() {
       drawEnd = screenHeight - 1;
     }
 
-    drawStart = Math.floor(drawStart, 10);
-    drawEnd = Math.floor(drawEnd, 10);
+    drawStart |= 0;
+    drawEnd |= 0;
 
     // calculate value of wallX
     let wallX; // where exactly the wall was hit
@@ -203,21 +205,21 @@ function update() {
     } else {
       wallX = pos.x + (perpWallDist * rayDirX);
     }
-    wallX -= Math.floor(wallX);
+    wallX -= Math.floor(wallX); // This actually has to be floored, this is not int casting
 
     // x coordinate on the texture
-    let texX = parseInt(wallX * texWidth, 10);
+    let texX = (wallX * texWidth) | 0;
     if (side === 0 && rayDirX > 0) texX = texWidth - texX - 1;
     if (side === 1 && rayDirY < 0) texX = texWidth - texX - 1;
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
     let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
     let lightBumpValue = 0.1; // TODO: REFACTOR THIS
-    let shadeFactor = Math.min((parseInt(lightScale * 16, 10) / 16) + lightBumpValue, 1);
+    let shadeFactor = Math.min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (screenHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
-      let texY = parseInt(((d * texHeight) / lineHeight) / 256, 10);
+      let texY = (((d * texHeight) / lineHeight) / 256) | 0;
       if (!TEX[texY]) continue;
       let textureShade = (0.5 + (TEX[texY][texX] * 0.5));
       // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
@@ -258,33 +260,34 @@ function update() {
     let transformX = invDet * ((dir.y * spriteX) - (dir.x * spriteY));
     let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
 
-    let spriteScreenX = Math.floor((screenWidth / 2) * (1 + (transformX / transformY)));
+    let spriteScreenX = ((screenWidth / 2) * (1 + (transformX / transformY))) | 0;
 
     // parameters for scaling and moving the sprites
     const uDiv = 2;
     const vDiv = 2;
     const vMove = 8.0;
-    let vMoveScreen = Math.floor(vMove / transformY);
+    let vMoveScreen = (vMove / transformY) | 0;
 
     // calculate height of the sprite on screen
-    let spriteHeight = Math.floor(Math.abs(Math.floor(screenHeight / transformY)) / vDiv); // using "transformY" instead of the real distance prevents fisheye
+    let spriteHeight = (Math.abs(((screenHeight / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
     // calculate lowest and highest pixel to fill in current stripe
-    let drawStartY = Math.floor((-spriteHeight / 2) + (screenHeight / 2)) + vMoveScreen;
+    let drawStartY = (((-spriteHeight / 2) + (screenHeight / 2)) | 0) + vMoveScreen;
     if (drawStartY < 0) drawStartY = 0;
-    let drawEndY = Math.floor((spriteHeight / 2) + (screenHeight / 2)) + vMoveScreen;
+    let drawEndY = (((spriteHeight / 2) + (screenHeight / 2)) | 0) + vMoveScreen;
     if (drawEndY >= screenHeight) drawEndY = screenHeight - 1;
 
     // calculate width of the sprite
-    let spriteWidth = Math.floor(Math.abs(Math.floor(screenHeight / (transformY))) / uDiv);
-    let drawStartX = Math.floor((-spriteWidth / 2) + spriteScreenX);
+    let spriteWidth = (Math.abs(((screenHeight / transformY) | 0)) / uDiv) | 0;
+    let drawStartX = ((-spriteWidth / 2) + spriteScreenX) | 0;
     if (drawStartX < 0) drawStartX = 0;
-    let drawEndX = Math.floor((spriteWidth / 2) + spriteScreenX);
+    let drawEndX = ((spriteWidth / 2) + spriteScreenX) | 0;
     if (drawEndX >= screenWidth) drawEndX = screenWidth - 1;
 
     // loop through every vertical stripe of the sprite on screen
     gl.fillStyle = 'red';
     for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
-      let texX = Math.floor(Math.floor(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * texWidth / spriteWidth) / 256);
+      let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * texWidth) / spriteWidth)) | 0) / 256) | 0;
+
       // the conditions in the if are:
       // 1) it's in front of camera plane so you don't see things behind you
       // 2) it's on the screen (left)
@@ -293,15 +296,11 @@ function update() {
       if (transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe]) {
         for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
           let d = (((y - vMoveScreen) * 256) - (screenHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
-
-          // let texY = parseInt(((d * texHeight) / spriteHeight) / 256, 10); // THIS IS SLOW
-          let texY = ~~(((d * texHeight) / spriteHeight) / 256);
+          let texY = (((d * texHeight) / spriteHeight) / 256) | 0;
 
           if (!SPRITE_TEX[texY]) continue;
           let color = SPRITE_TEX[texY][texX]; // get current color from the texture
-          if (color === 1) {
-            gl.fillRect(stripe, y, 1, 1);
-          }
+          if (color === 1) gl.fillRect(stripe, y, 1, 1);
         }
       }
     }
@@ -316,25 +315,15 @@ function update() {
   if (keyState.up) {
     const dx = pos.x + (dir.x * moveSpeed);
     const dy = pos.y + (dir.y * moveSpeed);
-    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
-      pos.x = dx;
-    }
-
-    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
-      pos.y = dy;
-    }
+    if (checkMapCollision(dx, pos.y)) pos.x = dx;
+    if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.down) {
     const dx = pos.x - (dir.x * moveSpeed);
     const dy = pos.y - (dir.y * moveSpeed);
-    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
-      pos.x = dx;
-    }
-
-    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
-      pos.y = dy;
-    }
+    if (checkMapCollision(dx, pos.y)) pos.x = dx;
+    if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   const rot = { x: -1 * dir.y, y: dir.x };
@@ -342,32 +331,22 @@ function update() {
   if (keyState.right) {
     const dx = pos.x - (rot.x * moveSpeed * 0.5);
     const dy = pos.y - (rot.y * moveSpeed * 0.5);
-    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
-      pos.x = dx;
-    }
-
-    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
-      pos.y = dy;
-    }
+    if (checkMapCollision(dx, pos.y)) pos.x = dx;
+    if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.left) {
     const dx = pos.x + (rot.x * moveSpeed * 0.5);
     const dy = pos.y + (rot.y * moveSpeed * 0.5);
-    if (MAP[Math.floor(dx)][Math.floor(pos.y)] === 0) {
-      pos.x = dx;
-    }
-
-    if (MAP[Math.floor(pos.x)][Math.floor(dy)] === 0) {
-      pos.y = dy;
-    }
+    if (checkMapCollision(dx, pos.y)) pos.x = dx;
+    if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.rotateRight) {
-    const oldDirX = parseFloat(dir.x);
+    const oldDirX = dir.x;
     dir.x = (dir.x * Math.cos(-rotSpeed)) - (dir.y * Math.sin(-rotSpeed));
     dir.y = (oldDirX * Math.sin(-rotSpeed)) + (dir.y * Math.cos(-rotSpeed));
-    const oldPlaneX = parseFloat(plane.x);
+    const oldPlaneX = plane.x;
     plane.x = (plane.x * Math.cos(-rotSpeed)) - (plane.y * Math.sin(-rotSpeed));
     plane.y = (oldPlaneX * Math.sin(-rotSpeed)) + (plane.y * Math.cos(-rotSpeed));
   }
