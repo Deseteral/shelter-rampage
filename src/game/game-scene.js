@@ -238,6 +238,7 @@ function update() {
   }
 
   // sprite casting
+  // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
   for (let i = 0; i < sprites.length; i++) {
     spriteOrder[i] = i;
     spriteDistance[i] = (((pos.x - sprites[i].x) * (pos.x - sprites[i].x)) + ((pos.y - sprites[i].y) * (pos.y - sprites[i].y)));
@@ -284,9 +285,19 @@ function update() {
     if (drawEndX >= screenWidth) drawEndX = screenWidth - 1;
 
     // loop through every vertical stripe of the sprite on screen
-    gl.fillStyle = 'red';
     for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
       let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * texWidth) / spriteWidth)) | 0) / 256) | 0;
+
+      let lightBumpValue = 0.4;
+      let shadeFactor = Math.min((((drawEndY - drawStartY) / screenHeight) + lightBumpValue), 1);
+
+      const color = {
+        r: 255 * shadeFactor,
+        g: 255 * shadeFactor,
+        b: 14 * shadeFactor,
+      };
+
+      gl.fillStyle = colorToString(color);
 
       // the conditions in the if are:
       // 1) it's in front of camera plane so you don't see things behind you
@@ -299,8 +310,7 @@ function update() {
           let texY = (((d * texHeight) / spriteHeight) / 256) | 0;
 
           if (!SPRITE_TEX[texY]) continue;
-          let color = SPRITE_TEX[texY][texX]; // get current color from the texture
-          if (color === 1) gl.fillRect(stripe, y, 1, 1);
+          if (SPRITE_TEX[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
         }
       }
     }
