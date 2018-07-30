@@ -59,7 +59,7 @@ const SPRITE_TEX = [
 ];
 
 const sprites = [
-  { x: 16, y: 12 },
+  { x: 14, y: 12 },
 ];
 
 const zBuffer = []; // for every vertical line
@@ -202,8 +202,8 @@ function update() {
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
     let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
-    let shadeFactor = (parseInt(lightScale * 16, 10) / 16);
-    // let shadeFactor = 1;
+    let lightBumpValue = 0.4; // TODO: REFACTOR THIS
+    let shadeFactor = Math.min((parseInt(lightScale * 16, 10) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (screenHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
@@ -360,6 +360,8 @@ function update() {
     plane.x = (plane.x * Math.cos(rotSpeed)) - (plane.y * Math.sin(rotSpeed));
     plane.y = (oldPlaneX * Math.sin(rotSpeed)) + (plane.y * Math.cos(rotSpeed));
   }
+
+  sprites[0].y = 6 + (Math.sin(new Date().getTime() / 2000) * 12);
 }
 
 export default {
