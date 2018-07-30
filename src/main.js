@@ -36,3 +36,4 @@ if (module.hot) {
 
 
 // TODO: Make all consts - lets
+// TODO: Replace Math.floor with |0

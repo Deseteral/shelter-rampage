@@ -18,6 +18,8 @@
     "no-plusplus": "off",
     "prefer-const": "off",
     "arrow-parens": "off",
-    "max-len": "off"
+    "max-len": "off",
+    "no-bitwise": "off",
+    "no-continue": "off"
   }
 }
