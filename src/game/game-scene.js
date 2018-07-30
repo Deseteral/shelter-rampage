@@ -47,10 +47,56 @@ const TEX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
+const SPRITE_TEX = [
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1],
+  [1, 0, 1, 0, 0, 1, 0, 1],
+  [1, 0, 0, 1, 1, 0, 0, 1],
+  [1, 0, 0, 1, 1, 0, 0, 1],
+  [1, 0, 1, 0, 0, 1, 0, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+];
+
+const sprites = [
+  { x: 16, y: 12 },
+];
+
+const zBuffer = []; // for every vertical line
+const spriteOrder = [];
+const spriteDistance = [];
+
 const offscreen = document.createElement('canvas');
 offscreen.width = screenWidth;
 offscreen.height = screenHeight;
 const gl = offscreen.getContext('2d');
+
+function combSort(order, dist, amount) {
+  let gap = amount;
+  let swapped = false;
+  while (gap > 1 || swapped) {
+    // shrink factor 1.3
+    gap = (gap * 10) / 13;
+    if (gap === 9 || gap === 10) gap = 11;
+    if (gap < 1) gap = 1;
+    swapped = false;
+    for (let i = 0; i < (amount - gap); i++) {
+      let j = i + gap;
+      if (dist[i] < dist[j]) {
+        let di = dist[i];
+        let dj = dist[j];
+        dist[i] = dj;
+        dist[j] = di;
+
+        let oi = order[i];
+        let oj = order[j];
+        order[i] = oj;
+        order[j] = oi;
+        swapped = true;
+      }
+    }
+  }
+}
 
 function update() {
   const { pos, dir, plane } = gameData;
@@ -173,6 +219,71 @@ function update() {
       };
       gl.fillStyle = colorToString(color);
       gl.fillRect(x, y, 1, 1);
+    }
+
+    // sprite casting
+    zBuffer[x] = perpWallDist;
+
+    for (let i = 0; i < sprites.length; i++) {
+      spriteOrder[i] = i;
+      spriteDistance[i] = (((pos.x - sprites[i].x) * (pos.x - sprites[i].x)) + ((pos.y - sprites[i].y) * (pos.y - sprites[i].y)));
+    }
+
+    combSort(spriteOrder, spriteDistance, sprites.length);
+
+    for (let i = 0; i < sprites.length; i++) {
+      // translate sprite position to relative to camera
+      let spriteX = sprites[spriteOrder[i]].x - pos.x;
+      let spriteY = sprites[spriteOrder[i]].y - pos.y;
+
+      // transform sprite with the inverse camera matrix
+      // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
+      // [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
+      // [ planeY   dirY ]                                          [ -planeY  planeX ]
+
+      let invDet = 1.0 / ((plane.x * dir.y) - (dir.x * plane.y)); // required for correct matrix multiplication
+
+      let transformX = invDet * ((dir.y * spriteX) - (dir.x * spriteY));
+      let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
+
+      let spriteScreenX = Math.floor((screenWidth / 2) * (1 + (transformX / transformY)));
+
+      // calculate height of the sprite on screen
+      let spriteHeight = Math.abs(Math.floor(screenHeight / transformY)); // using "transformY" instead of the real distance prevents fisheye
+      // calculate lowest and highest pixel to fill in current stripe
+      let drawStartY = Math.floor((-spriteHeight / 2) + (screenHeight / 2));
+      if (drawStartY < 0) drawStartY = 0;
+      let drawEndY = Math.floor((spriteHeight / 2) + (screenHeight / 2));
+      if (drawEndY >= screenHeight) drawEndY = screenHeight - 1;
+
+      // calculate width of the sprite
+      let spriteWidth = Math.abs(Math.floor(screenHeight / (transformY)));
+      let drawStartX = Math.floor((-spriteWidth / 2) + spriteScreenX);
+      if (drawStartX < 0) drawStartX = 0;
+      let drawEndX = Math.floor((spriteWidth / 2) + spriteScreenX);
+      if (drawEndX >= screenWidth) drawEndX = screenWidth - 1;
+
+      // loop through every vertical stripe of the sprite on screen
+      for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
+        let texX = Math.floor(Math.floor(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * texWidth / spriteWidth) / 256);
+        // the conditions in the if are:
+        // 1) it's in front of camera plane so you don't see things behind you
+        // 2) it's on the screen (left)
+        // 3) it's on the screen (right)
+        // 4) ZBuffer, with perpendicular distance
+        if (transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe]) {
+          for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
+            let d = ((y * 256) - (screenHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
+            let texY = parseInt(((d * texHeight) / spriteHeight) / 256, 10);
+            let color = SPRITE_TEX[texY][texX]; // get current color from the texture
+            if (color === 1) {
+              // buffer[y][stripe] = color; //paint pixel if it isn't black, black is the invisible color
+              gl.fillStyle = 'red';
+              gl.fillRect(stripe, y, 1, 1);
+            }
+          }
+        }
+      }
     }
   }
 

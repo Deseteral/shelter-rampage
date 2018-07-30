@@ -26,13 +26,13 @@ run();
 
 
 // TODO: Remove this on dist
-// if (module.hot) {
-//   module.hot.accept('./game/game-scene', () => {
-//     const newScene = require('./game/game-scene').default; // eslint-disable-line global-require
-//     engine.scene = newScene;
-//     console.clear();
-//   });
-// }
+if (module.hot) {
+  module.hot.accept('./game/game-scene', () => {
+    const newScene = require('./game/game-scene').default; // eslint-disable-line global-require
+    engine.scene = newScene;
+    console.clear();
+  });
+}
 
 
 // TODO: Make all consts - lets
