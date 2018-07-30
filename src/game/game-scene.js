@@ -318,6 +318,19 @@ function update() {
 
   engine.gl.drawImage(offscreen, 0, 0, 360, 400);
 
+  if (window.DEBUG) {
+    const dict = {};
+    const pixels = engine.gl.getImageData(0, 0, 360, 400).data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
+      if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
+      dict[key] = true;
+    }
+
+    console.log(`Distinct colors in frame ${Object.keys(dict).length}`);
+    // if (Object.keys(dict).length >= 32) console.error(`${Object.keys(dict).length} colors in frame!`);
+  }
+
   // rendering end
   // input begin
   const keyState = getKeyState();
