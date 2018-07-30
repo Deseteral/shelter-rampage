@@ -202,7 +202,7 @@ function update() {
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
     let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
-    let lightBumpValue = 0.4; // TODO: REFACTOR THIS
+    let lightBumpValue = 0.1; // TODO: REFACTOR THIS
     let shadeFactor = Math.min((parseInt(lightScale * 16, 10) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
@@ -248,16 +248,22 @@ function update() {
 
       let spriteScreenX = Math.floor((screenWidth / 2) * (1 + (transformX / transformY)));
 
+      // parameters for scaling and moving the sprites
+      const uDiv = 2;
+      const vDiv = 2;
+      const vMove = 8.0;
+      let vMoveScreen = Math.floor(vMove / transformY);
+
       // calculate height of the sprite on screen
-      let spriteHeight = Math.abs(Math.floor(screenHeight / transformY)); // using "transformY" instead of the real distance prevents fisheye
+      let spriteHeight = Math.floor(Math.abs(Math.floor(screenHeight / transformY)) / vDiv); // using "transformY" instead of the real distance prevents fisheye
       // calculate lowest and highest pixel to fill in current stripe
-      let drawStartY = Math.floor((-spriteHeight / 2) + (screenHeight / 2));
+      let drawStartY = Math.floor((-spriteHeight / 2) + (screenHeight / 2)) + vMoveScreen;
       if (drawStartY < 0) drawStartY = 0;
-      let drawEndY = Math.floor((spriteHeight / 2) + (screenHeight / 2));
+      let drawEndY = Math.floor((spriteHeight / 2) + (screenHeight / 2)) + vMoveScreen;
       if (drawEndY >= screenHeight) drawEndY = screenHeight - 1;
 
       // calculate width of the sprite
-      let spriteWidth = Math.abs(Math.floor(screenHeight / (transformY)));
+      let spriteWidth = Math.floor(Math.abs(Math.floor(screenHeight / (transformY))) / uDiv);
       let drawStartX = Math.floor((-spriteWidth / 2) + spriteScreenX);
       if (drawStartX < 0) drawStartX = 0;
       let drawEndX = Math.floor((spriteWidth / 2) + spriteScreenX);
@@ -273,7 +279,7 @@ function update() {
         // 4) ZBuffer, with perpendicular distance
         if (transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe]) {
           for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
-            let d = ((y * 256) - (screenHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
+            let d = (((y - vMoveScreen) * 256) - (screenHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
             let texY = parseInt(((d * texHeight) / spriteHeight) / 256, 10);
             let color = SPRITE_TEX[texY][texX]; // get current color from the texture
             if (color === 1) {
@@ -361,7 +367,7 @@ function update() {
     plane.y = (oldPlaneX * Math.sin(rotSpeed)) + (plane.y * Math.cos(rotSpeed));
   }
 
-  sprites[0].y = 6 + (Math.sin(new Date().getTime() / 2000) * 12);
+  // sprites[0].y = 6 + (Math.sin(new Date().getTime() / 2000) * 12);
 }
 
 export default {
