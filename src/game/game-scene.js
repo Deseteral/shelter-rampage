@@ -41,8 +41,8 @@ const checkMapCollision = (x, y) => MAP[x | 0][y | 0] === 0;
 
 const texWidth = 8;
 const texHeight = 8;
-const screenWidth = 180;
-const screenHeight = 200;
+const screenWidth = 90;
+const screenHeight = 100;
 const moveSpeed = 0.1;
 const rotSpeed = 0.03;
 
