@@ -7,7 +7,7 @@ window.engine = {
 };
 
 window.gameData = {
-  pos: { x: 22, y: 12 },
+  pos: { x: 2, y: 2 },
   dir: { x: -1, y: 0 },
   plane: { x: 0, y: 0.66 },
 };
