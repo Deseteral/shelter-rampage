@@ -1,0 +1,57 @@
+<script>
+  // Config variables
+  const files = [
+    'testWall',
+    'testEnemy'
+  ];
+  const textureSize = 8;
+  const textureFormat = 'png';
+  const resourcePath = './resources';
+  const unpackFunctionName = 'textureUnpack';
+</script>
+<script>
+  function loadImage(src, name) {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = textureSize;
+      canvas.height = textureSize;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      let binary = '';
+
+      const img = new Image();
+      img.src = src;
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        const pixels = ctx.getImageData(0, 0, textureSize, textureSize).data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          const pixel = { r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] };
+
+          if (pixel.r === 255 && pixel.g === 255 && pixel.b === 255) {
+            binary += '1';
+          } else {
+            binary += '0';
+          }
+        }
+
+        resolve({ name, binary });
+      }
+    });
+  }
+
+  const workers = files
+    .map(name => ({ src: `${resourcePath}/${name}.${textureFormat}`, name }))
+    .map(({ src, name }) => loadImage(src, name));
+
+  Promise.all(workers).then((arr) => {
+    const out = arr
+      .map(({ name, binary }) => `const ${name} = ${unpackFunctionName}('${binary}');`)
+      .join('<br>\n');
+    document.getElementById('out').innerHTML = out;
+  });
+
+</script>
+
+<div id="out" style="font-family: monospace;"></div>

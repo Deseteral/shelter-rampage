@@ -20,6 +20,7 @@
     "arrow-parens": "off",
     "max-len": "off",
     "no-bitwise": "off",
-    "no-continue": "off"
+    "no-continue": "off",
+    "no-floating-decimal": "off"
   }
 }

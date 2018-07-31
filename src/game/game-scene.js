@@ -39,6 +39,7 @@ const MAP = [
 
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const checkMapCollision = (x, y) => MAP[x | 0][y | 0] === 0;
+const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
 
 const textureSize = 8;
 const bufferWidth = 90;
@@ -46,27 +47,8 @@ const bufferHeight = 100;
 const playerMoveSpeed = 0.1;
 const playerRotateSpeed = 0.03;
 
-const TEX = [
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 0, 0, 1, 1, 0],
-  [0, 1, 1, 0, 0, 1, 1, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 0],
-  [0, 1, 1, 1, 1, 1, 1, 0],
-  [0, 0, 1, 1, 1, 1, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-];
-
-const SPRITE_TEX = [
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 1, 1, 0, 0, 0],
-  [0, 0, 1, 1, 1, 1, 0, 0],
-  [0, 1, 0, 1, 1, 0, 1, 0],
-  [1, 1, 1, 1, 1, 1, 1, 1],
-  [0, 1, 0, 0, 0, 0, 1, 0],
-  [0, 1, 0, 0, 0, 0, 1, 0],
-];
+const TEX = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
+const SPRITE_TEX = textureUnpack('0000000000011000001111000010010000111100010010100101101010010101');
 
 const enemies = [
   { x: 14, y: 12 },
