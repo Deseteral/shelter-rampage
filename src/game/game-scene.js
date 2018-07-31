@@ -59,40 +59,11 @@ const enemies = [
 
 const zBuffer = []; // for every vertical line
 const spriteOrder = [];
-const spriteDistance = [];
 
 const offscreen = document.createElement('canvas');
 offscreen.width = bufferWidth;
 offscreen.height = bufferHeight;
 const gl = offscreen.getContext('2d');
-
-// TODO: Replace this code with native JS sort
-function combSort(order, dist, amount) {
-  let gap = amount;
-  let swapped = false;
-  while (gap > 1 || swapped) {
-    // shrink factor 1.3
-    gap = (gap * 10) / 13;
-    if (gap === 9 || gap === 10) gap = 11;
-    if (gap < 1) gap = 1;
-    swapped = false;
-    for (let i = 0; i < (amount - gap); i++) {
-      let j = i + gap;
-      if (dist[i] < dist[j]) {
-        let di = dist[i];
-        let dj = dist[j];
-        dist[i] = dj;
-        dist[j] = di;
-
-        let oi = order[i];
-        let oj = order[j];
-        order[i] = oj;
-        order[j] = oi;
-        swapped = true;
-      }
-    }
-  }
-}
 
 function update() {
   DEBUG_TIME('update');
@@ -230,16 +201,18 @@ function update() {
 
   // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
   for (let i = 0; i < sprites.length; i++) {
-    spriteOrder[i] = i;
-    spriteDistance[i] = (((pos.x - sprites[i].x) * (pos.x - sprites[i].x)) + ((pos.y - sprites[i].y) * (pos.y - sprites[i].y)));
+    spriteOrder[i] = {
+      order: i,
+      distance: (((pos.x - sprites[i].x) * (pos.x - sprites[i].x)) + ((pos.y - sprites[i].y) * (pos.y - sprites[i].y))),
+    };
   }
 
-  combSort(spriteOrder, spriteDistance, sprites.length);
+  spriteOrder.sort((a, b) => b.distance - a.distance);
 
   for (let i = 0; i < sprites.length; i++) {
     // translate sprite position to relative to camera
-    let spriteX = sprites[spriteOrder[i]].x - pos.x;
-    let spriteY = sprites[spriteOrder[i]].y - pos.y;
+    let spriteX = sprites[spriteOrder[i].order].x - pos.x;
+    let spriteY = sprites[spriteOrder[i].order].y - pos.y;
 
     // transform sprite with the inverse camera matrix
     // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
