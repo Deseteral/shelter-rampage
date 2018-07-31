@@ -1,14 +1,14 @@
 import getKeyState from '../engine/keyboard';
 
+// TODO: Remove this
 function DEBUG_TIME(name) {
   if (window.DEBUG) console.time(name);
 }
 
+// TODO: Remove this
 function DEBUG_TIME_END(name) {
   if (window.DEBUG) console.timeEnd(name);
 }
-
-const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 
 const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -37,14 +37,14 @@ const MAP = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
+const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const checkMapCollision = (x, y) => MAP[x | 0][y | 0] === 0;
 
-const texWidth = 8;
-const texHeight = 8;
-const screenWidth = 90;
-const screenHeight = 100;
-const moveSpeed = 0.1;
-const rotSpeed = 0.03;
+const textureSize = 8;
+const bufferWidth = 90;
+const bufferHeight = 100;
+const playerMoveSpeed = 0.1;
+const playerRotateSpeed = 0.03;
 
 const TEX = [
   [0, 0, 0, 0, 0, 0, 0, 0],
@@ -68,8 +68,11 @@ const SPRITE_TEX = [
   [0, 1, 0, 0, 0, 0, 1, 0],
 ];
 
-const sprites = [
+const enemies = [
   { x: 14, y: 12 },
+  { x: 10, y: 15 },
+  { x: 21.5, y: 8 },
+  { x: 13, y: 13 },
 ];
 
 const zBuffer = []; // for every vertical line
@@ -77,10 +80,11 @@ const spriteOrder = [];
 const spriteDistance = [];
 
 const offscreen = document.createElement('canvas');
-offscreen.width = screenWidth;
-offscreen.height = screenHeight;
+offscreen.width = bufferWidth;
+offscreen.height = bufferHeight;
 const gl = offscreen.getContext('2d');
 
+// TODO: Replace this code with native JS sort
 function combSort(order, dist, amount) {
   let gap = amount;
   let swapped = false;
@@ -113,11 +117,13 @@ function update() {
 
   const { pos, dir, plane } = gameData;
 
+  // Clear buffer
   gl.fillStyle = 'black';
-  gl.fillRect(0, 0, screenWidth, screenHeight);
+  gl.fillRect(0, 0, bufferWidth, bufferHeight);
 
-  for (let x = 0; x < screenWidth; x++) {
-    const cameraX = ((2 * x) / screenWidth) - 1;
+  // Render world
+  for (let x = 0; x < bufferWidth; x++) {
+    const cameraX = ((2 * x) / bufferWidth) - 1;
     const rayDirX = dir.x + (plane.x * cameraX);
     const rayDirY = dir.y + (plane.y * cameraX);
 
@@ -183,16 +189,16 @@ function update() {
     }
 
     // Calculate height of line to draw on screen
-    const lineHeight = (screenHeight / perpWallDist) | 0;
+    const lineHeight = (bufferHeight / perpWallDist) | 0;
 
     // calculate lowest and highest pixel to fill in current stripe
-    let drawStart = (-lineHeight / 2) + (screenHeight / 2);
+    let drawStart = (-lineHeight / 2) + (bufferHeight / 2);
     if (drawStart < 0) {
       drawStart = 0;
     }
-    let drawEnd = (lineHeight / 2) + (screenHeight / 2);
-    if (drawEnd >= screenHeight) {
-      drawEnd = screenHeight - 1;
+    let drawEnd = (lineHeight / 2) + (bufferHeight / 2);
+    if (drawEnd >= bufferHeight) {
+      drawEnd = bufferHeight - 1;
     }
 
     drawStart |= 0;
@@ -208,18 +214,18 @@ function update() {
     wallX -= Math.floor(wallX); // This actually has to be floored, this is not int casting
 
     // x coordinate on the texture
-    let texX = (wallX * texWidth) | 0;
-    if (side === 0 && rayDirX > 0) texX = texWidth - texX - 1;
-    if (side === 1 && rayDirY < 0) texX = texWidth - texX - 1;
+    let texX = (wallX * textureSize) | 0;
+    if (side === 0 && rayDirX > 0) texX = textureSize - texX - 1;
+    if (side === 1 && rayDirY < 0) texX = textureSize - texX - 1;
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
-    let lightScale = (drawEnd - drawStart) / screenHeight; // 0 to 1
+    let lightScale = (drawEnd - drawStart) / bufferHeight; // 0 to 1
     let lightBumpValue = 0.1; // TODO: REFACTOR THIS
     let shadeFactor = Math.min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
-      let d = ((y * 256) - (screenHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
-      let texY = (((d * texHeight) / lineHeight) / 256) | 0;
+      let d = ((y * 256) - (bufferHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
+      let texY = (((d * textureSize) / lineHeight) / 256) | 0;
       if (!TEX[texY]) continue;
       let textureShade = (0.5 + (TEX[texY][texX] * 0.5));
       // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
@@ -237,7 +243,9 @@ function update() {
     zBuffer[x] = perpWallDist;
   }
 
-  // sprite casting
+  // Sprite casting
+  const sprites = [].concat(enemies);
+
   // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
   for (let i = 0; i < sprites.length; i++) {
     spriteOrder[i] = i;
@@ -261,53 +269,53 @@ function update() {
     let transformX = invDet * ((dir.y * spriteX) - (dir.x * spriteY));
     let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
 
-    let spriteScreenX = ((screenWidth / 2) * (1 + (transformX / transformY))) | 0;
+    let spriteScreenX = ((bufferWidth / 2) * (1 + (transformX / transformY))) | 0;
 
     // parameters for scaling and moving the sprites
     const uDiv = 2;
     const vDiv = 2;
-    const vMove = 8.0;
+    const vMove = 8;
     let vMoveScreen = (vMove / transformY) | 0;
 
     // calculate height of the sprite on screen
-    let spriteHeight = (Math.abs(((screenHeight / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
+    let spriteHeight = (Math.abs(((bufferHeight / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
     // calculate lowest and highest pixel to fill in current stripe
-    let drawStartY = (((-spriteHeight / 2) + (screenHeight / 2)) | 0) + vMoveScreen;
+    let drawStartY = (((-spriteHeight / 2) + (bufferHeight / 2)) | 0) + vMoveScreen;
     if (drawStartY < 0) drawStartY = 0;
-    let drawEndY = (((spriteHeight / 2) + (screenHeight / 2)) | 0) + vMoveScreen;
-    if (drawEndY >= screenHeight) drawEndY = screenHeight - 1;
+    let drawEndY = (((spriteHeight / 2) + (bufferHeight / 2)) | 0) + vMoveScreen;
+    if (drawEndY >= bufferHeight) drawEndY = bufferHeight - 1;
 
     // calculate width of the sprite
-    let spriteWidth = (Math.abs(((screenHeight / transformY) | 0)) / uDiv) | 0;
+    let spriteWidth = (Math.abs(((bufferHeight / transformY) | 0)) / uDiv) | 0;
     let drawStartX = ((-spriteWidth / 2) + spriteScreenX) | 0;
     if (drawStartX < 0) drawStartX = 0;
     let drawEndX = ((spriteWidth / 2) + spriteScreenX) | 0;
-    if (drawEndX >= screenWidth) drawEndX = screenWidth - 1;
+    if (drawEndX >= bufferWidth) drawEndX = bufferWidth - 1;
+
+    let lightBumpValue = 0.4;
+    let shadeFactor = Math.min((((drawEndY - drawStartY) / bufferHeight) + lightBumpValue), 1);
+
+    const color = {
+      r: 255 * shadeFactor,
+      g: 255 * shadeFactor,
+      b: 14 * shadeFactor,
+    };
+
+    gl.fillStyle = colorToString(color);
 
     // loop through every vertical stripe of the sprite on screen
     for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
-      let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * texWidth) / spriteWidth)) | 0) / 256) | 0;
-
-      let lightBumpValue = 0.4;
-      let shadeFactor = Math.min((((drawEndY - drawStartY) / screenHeight) + lightBumpValue), 1);
-
-      const color = {
-        r: 255 * shadeFactor,
-        g: 255 * shadeFactor,
-        b: 14 * shadeFactor,
-      };
-
-      gl.fillStyle = colorToString(color);
+      let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * textureSize) / spriteWidth)) | 0) / 256) | 0;
 
       // the conditions in the if are:
       // 1) it's in front of camera plane so you don't see things behind you
       // 2) it's on the screen (left)
       // 3) it's on the screen (right)
       // 4) ZBuffer, with perpendicular distance
-      if (transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe]) {
+      if (transformY > 0 && stripe > 0 && stripe < bufferWidth && transformY < zBuffer[stripe]) {
         for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
-          let d = (((y - vMoveScreen) * 256) - (screenHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
-          let texY = (((d * texHeight) / spriteHeight) / 256) | 0;
+          let d = (((y - vMoveScreen) * 256) - (bufferHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
+          let texY = (((d * textureSize) / spriteHeight) / 256) | 0;
 
           if (!SPRITE_TEX[texY]) continue;
           if (SPRITE_TEX[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
@@ -316,6 +324,7 @@ function update() {
     }
   }
 
+  // Render offscreen buffer
   engine.gl.drawImage(offscreen, 0, 0, 360, 400);
 
   if (window.DEBUG) {
@@ -327,63 +336,61 @@ function update() {
       dict[key] = true;
     }
 
-    console.log(`Distinct colors in frame ${Object.keys(dict).length}`);
-    // if (Object.keys(dict).length >= 32) console.error(`${Object.keys(dict).length} colors in frame!`);
+    console.log(`Distinct colors in frame: ${Object.keys(dict).length}`);
   }
 
-  // rendering end
-  // input begin
+  // Rendering end
+  // Input processing
   const keyState = getKeyState();
 
   if (keyState.up) {
-    const dx = pos.x + (dir.x * moveSpeed);
-    const dy = pos.y + (dir.y * moveSpeed);
+    const dx = pos.x + (dir.x * playerMoveSpeed);
+    const dy = pos.y + (dir.y * playerMoveSpeed);
     if (checkMapCollision(dx, pos.y)) pos.x = dx;
     if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.down) {
-    const dx = pos.x - (dir.x * moveSpeed);
-    const dy = pos.y - (dir.y * moveSpeed);
+    const dx = pos.x - (dir.x * playerMoveSpeed);
+    const dy = pos.y - (dir.y * playerMoveSpeed);
     if (checkMapCollision(dx, pos.y)) pos.x = dx;
     if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
-  const rot = { x: -1 * dir.y, y: dir.x };
+  const rotationVector = { x: -1 * dir.y, y: dir.x };
 
   if (keyState.right) {
-    const dx = pos.x - (rot.x * moveSpeed * 0.5);
-    const dy = pos.y - (rot.y * moveSpeed * 0.5);
+    const dx = pos.x - (rotationVector.x * playerMoveSpeed * 0.5);
+    const dy = pos.y - (rotationVector.y * playerMoveSpeed * 0.5);
     if (checkMapCollision(dx, pos.y)) pos.x = dx;
     if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.left) {
-    const dx = pos.x + (rot.x * moveSpeed * 0.5);
-    const dy = pos.y + (rot.y * moveSpeed * 0.5);
+    const dx = pos.x + (rotationVector.x * playerMoveSpeed * 0.5);
+    const dy = pos.y + (rotationVector.y * playerMoveSpeed * 0.5);
     if (checkMapCollision(dx, pos.y)) pos.x = dx;
     if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
   if (keyState.rotateRight) {
     const oldDirX = dir.x;
-    dir.x = (dir.x * Math.cos(-rotSpeed)) - (dir.y * Math.sin(-rotSpeed));
-    dir.y = (oldDirX * Math.sin(-rotSpeed)) + (dir.y * Math.cos(-rotSpeed));
+    dir.x = (dir.x * Math.cos(-playerRotateSpeed)) - (dir.y * Math.sin(-playerRotateSpeed));
+    dir.y = (oldDirX * Math.sin(-playerRotateSpeed)) + (dir.y * Math.cos(-playerRotateSpeed));
     const oldPlaneX = plane.x;
-    plane.x = (plane.x * Math.cos(-rotSpeed)) - (plane.y * Math.sin(-rotSpeed));
-    plane.y = (oldPlaneX * Math.sin(-rotSpeed)) + (plane.y * Math.cos(-rotSpeed));
+    plane.x = (plane.x * Math.cos(-playerRotateSpeed)) - (plane.y * Math.sin(-playerRotateSpeed));
+    plane.y = (oldPlaneX * Math.sin(-playerRotateSpeed)) + (plane.y * Math.cos(-playerRotateSpeed));
   }
 
   if (keyState.rotateLeft) {
     const oldDirX = dir.x;
-    dir.x = (dir.x * Math.cos(rotSpeed)) - (dir.y * Math.sin(rotSpeed));
-    dir.y = (oldDirX * Math.sin(rotSpeed)) + (dir.y * Math.cos(rotSpeed));
+    dir.x = (dir.x * Math.cos(playerRotateSpeed)) - (dir.y * Math.sin(playerRotateSpeed));
+    dir.y = (oldDirX * Math.sin(playerRotateSpeed)) + (dir.y * Math.cos(playerRotateSpeed));
     const oldPlaneX = plane.x;
-    plane.x = (plane.x * Math.cos(rotSpeed)) - (plane.y * Math.sin(rotSpeed));
-    plane.y = (oldPlaneX * Math.sin(rotSpeed)) + (plane.y * Math.cos(rotSpeed));
+    plane.x = (plane.x * Math.cos(playerRotateSpeed)) - (plane.y * Math.sin(playerRotateSpeed));
+    plane.y = (oldPlaneX * Math.sin(playerRotateSpeed)) + (plane.y * Math.cos(playerRotateSpeed));
   }
 
-  sprites[0].y = 6 + (Math.sin(new Date().getTime() / 2000) * 12);
   DEBUG_TIME_END('update');
   window.DEBUG = false;
 }
