@@ -1,27 +1,31 @@
 import getKeyState from '../engine/keyboard';
 
-// TODO: Remove this
+// TODO: DEBUG: Remove this
 function DEBUG_TIME(name) {
   if (window.DEBUG) console.time(name);
 }
 
-// TODO: Remove this
+// TODO: DEBUG: Remove this
 function DEBUG_TIME_END(name) {
   if (window.DEBUG) console.timeEnd(name);
 }
 
-const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const checkMapCollision = (x, y) => gameData.map[x | 0][y | 0] === 0;
 const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
+
 const pointsDistance = (a, b) => Math.sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
 const vecAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
-const vecSubtract = (a, b) => ({ x: a.x - b.x, y: a.y - b.y }); // TODO: Use vecAdd for this
-const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
+const vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
+const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
 const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
+const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
 const dirVecPoints = (a, b) => {
-  let vec = vecSubtract(b, a);
+  let vec = vecSub(b, a);
   return vecDiv(vec, vecLen(vec));
 };
+
+const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
+const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
 
 const textureSize = 8;
 const bufferWidth = 90;
@@ -156,10 +160,9 @@ function update() {
   }));
 
   bullets.forEach(b => {
-    let dx = b.pos.x + (b.dir.x * BULLET_SPEED);
-    let dy = b.pos.y + (b.dir.y * BULLET_SPEED);
-    if (checkMapCollision(dx, dy)) {
-      b.pos = { x: dx, y: dy };
+    let d = vecAdd(b.pos, vecMul(b.dir, BULLET_SPEED));
+    if (checkMapCollision(d.x, d.y)) {
+      b.pos = d;
     } else {
       b.lifetime = 0;
       return;
@@ -282,16 +285,11 @@ function update() {
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (bufferHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
       let texY = (((d * textureSize) / lineHeight) / 256) | 0;
+
       if (!testWallTexture[texY]) continue;
       let textureShade = (0.5 + (testWallTexture[texY][texX] * 0.5));
-      // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-      // if (side == 1) color = (color >> 1) & 8355711;
 
-      let color = {
-        r: 24 * shadeFactor * textureShade,
-        g: 200 * shadeFactor * textureShade,
-        b: 170 * shadeFactor * textureShade,
-      };
+      let color = colorMul({ r: 24, g: 200, b: 170 }, (shadeFactor * textureShade)); // TODO: Extract base color somewhere
       gl.fillStyle = colorToString(color);
       gl.fillRect(x, y, 1, 1);
     }
@@ -355,11 +353,7 @@ function update() {
     let lightBumpValue = 0.4;
     let shadeFactor = Math.min((((drawEndY - drawStartY) / bufferHeight) + lightBumpValue), 1);
 
-    const color = {
-      r: 255 * shadeFactor,
-      g: 255 * shadeFactor,
-      b: 14 * shadeFactor,
-    };
+    let color = colorMul({ r: 255, g: 255, b: 14 }, shadeFactor);
 
     gl.fillStyle = currentSprite.hit ? 'white' : colorToString(color);
 
@@ -387,6 +381,7 @@ function update() {
   // Render offscreen buffer
   engine.gl.drawImage(offscreen, 0, 0, 360, 400);
 
+  // TODO: DEBUG: Remove this
   if (window.DEBUG) {
     const dict = {};
     const pixels = engine.gl.getImageData(0, 0, 360, 400).data;
@@ -403,34 +398,32 @@ function update() {
 
   // Rendering end
   // Input processing
+  let forwardVector = vecMul(dir, playerMoveSpeed);
+
   if (keyState.up) {
-    const dx = pos.x + (dir.x * playerMoveSpeed);
-    const dy = pos.y + (dir.y * playerMoveSpeed);
-    if (checkMapCollision(dx, pos.y)) pos.x = dx;
-    if (checkMapCollision(pos.x, dy)) pos.y = dy;
+    let d = vecAdd(pos, forwardVector);
+    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
+    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
   }
 
   if (keyState.down) {
-    const dx = pos.x - (dir.x * playerMoveSpeed);
-    const dy = pos.y - (dir.y * playerMoveSpeed);
-    if (checkMapCollision(dx, pos.y)) pos.x = dx;
-    if (checkMapCollision(pos.x, dy)) pos.y = dy;
+    let d = vecSub(pos, forwardVector);
+    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
+    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
   }
 
-  const rotationVector = { x: -1 * dir.y, y: dir.x };
+  let sideVector = vecMul({ x: -1 * dir.y, y: dir.x }, (playerMoveSpeed * 0.5));
 
   if (keyState.right) {
-    const dx = pos.x - (rotationVector.x * playerMoveSpeed * 0.5);
-    const dy = pos.y - (rotationVector.y * playerMoveSpeed * 0.5);
-    if (checkMapCollision(dx, pos.y)) pos.x = dx;
-    if (checkMapCollision(pos.x, dy)) pos.y = dy;
+    let d = vecSub(pos, sideVector);
+    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
+    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
   }
 
   if (keyState.left) {
-    const dx = pos.x + (rotationVector.x * playerMoveSpeed * 0.5);
-    const dy = pos.y + (rotationVector.y * playerMoveSpeed * 0.5);
-    if (checkMapCollision(dx, pos.y)) pos.x = dx;
-    if (checkMapCollision(pos.x, dy)) pos.y = dy;
+    let d = vecAdd(pos, sideVector);
+    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
+    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
   }
 
   // Rotate the player
