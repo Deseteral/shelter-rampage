@@ -47,8 +47,9 @@ const bufferHeight = 100;
 const playerMoveSpeed = 0.1;
 const playerRotateSpeed = 0.03;
 
-const TEX = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
-const SPRITE_TEX = textureUnpack('0000000000011000001111000010010000111100010010100101101010010101');
+const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
+const testEnemyTexture = textureUnpack('0000000000011000001111000010010000111100010010100101101010010101');
+const bulletTexture = textureUnpack('0000000000000000000000000011110001111110011111100111111000111100');
 
 const enemies = [
   { x: 14, y: 12 },
@@ -257,8 +258,8 @@ function update() {
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (bufferHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
       let texY = (((d * textureSize) / lineHeight) / 256) | 0;
-      if (!TEX[texY]) continue;
-      let textureShade = (0.5 + (TEX[texY][texX] * 0.5));
+      if (!testWallTexture[texY]) continue;
+      let textureShade = (0.5 + (testWallTexture[texY][texX] * 0.5));
       // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
       // if (side == 1) color = (color >> 1) & 8355711;
 
@@ -350,8 +351,8 @@ function update() {
           let d = (((y - vMoveScreen) * 256) - (bufferHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
           let texY = (((d * textureSize) / spriteHeight) / 256) | 0;
 
-          if (!SPRITE_TEX[texY]) continue;
-          if (SPRITE_TEX[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
+          if (!testEnemyTexture[texY]) continue;
+          if (testEnemyTexture[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
         }
       }
     }

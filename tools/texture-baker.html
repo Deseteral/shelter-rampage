@@ -2,7 +2,8 @@
   // Config variables
   const files = [
     'testWall',
-    'testEnemy'
+    'testEnemy',
+    'bullet'
   ];
   const textureSize = 8;
   const textureFormat = 'png';
@@ -47,7 +48,7 @@
 
   Promise.all(workers).then((arr) => {
     const out = arr
-      .map(({ name, binary }) => `const ${name} = ${unpackFunctionName}('${binary}');`)
+      .map(({ name, binary }) => `const ${name}Texture = ${unpackFunctionName}('${binary}');`)
       .join('<br>\n');
     document.getElementById('out').innerHTML = out;
   });
