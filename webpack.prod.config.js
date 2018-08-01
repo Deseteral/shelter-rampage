@@ -1,5 +1,4 @@
 const path = require('path');
-const MinifyPlugin = require('babel-minify-webpack-plugin');
 
 module.exports = {
   mode: 'none',
@@ -18,15 +17,14 @@ module.exports = {
           options: {
             presets: [
               ['@babel/preset-env', {
-                targets: { chrome: 67 },
+                targets: { chrome: 68 },
               }],
+              'minify',
             ],
+            plugins: ['@babel/plugin-syntax-object-rest-spread'],
           },
         },
       },
     ],
   },
-  plugins: [
-    // new MinifyPlugin(),
-  ],
 };
