@@ -13,6 +13,7 @@ function DEBUG_TIME_END(name) {
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const checkMapCollision = (x, y) => gameData.map[x | 0][y | 0] === 0;
 const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
+const pointsDistance = (a, b) => Math.sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
 
 const textureSize = 8;
 const bufferWidth = 90;
@@ -33,12 +34,27 @@ const SPRITE_TEX = {
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
 };
 
-let enemies = [
-  { sprite: 'e1', pos: { x: 14, y: 12 }, life: 100 },
-  { sprite: 'e1', pos: { x: 10, y: 15 }, life: 100 },
-  { sprite: 'e1', pos: { x: 21.5, y: 8 }, life: 100 },
-  { sprite: 'e1', pos: { x: 13, y: 13 }, life: 100 },
-];
+function randomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * ((max - min) + 1)) + min;
+}
+
+let enemies = [];
+// let enemies = [
+//   { sprite: 'e1', pos: { x: 14, y: 12 }, life: 100 },
+//   { sprite: 'e1', pos: { x: 10, y: 15 }, life: 100 },
+//   { sprite: 'e1', pos: { x: 21.5, y: 8 }, life: 100 },
+//   { sprite: 'e1', pos: { x: 13, y: 13 }, life: 100 },
+// ];
+
+for (let i = 0; i < 250; i++) {
+  enemies.push({
+    sprite: 'e1',
+    pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
+    life: 100,
+  });
+}
 
 let bullets = [];
 
@@ -138,7 +154,15 @@ function update() {
       b.pos = { x: dx, y: dy };
     } else {
       b.lifetime = 0;
+      return;
     }
+
+    enemies.forEach(e => {
+      if (pointsDistance(b.pos, e.pos) < 0.5) {
+        e.life -= 10;
+        b.lifetime = 0;
+      }
+    });
   });
 
   // Render world
