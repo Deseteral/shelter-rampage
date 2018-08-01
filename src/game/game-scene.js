@@ -147,6 +147,8 @@ function update() {
   gl.fillRect(0, 0, bufferWidth, bufferHeight);
 
   // Update world
+  enemies = enemies.map(e => ({ ...e, hit: false }));
+
   bullets.forEach(b => {
     let dx = b.pos.x + (b.dir.x * BULLET_SPEED);
     let dy = b.pos.y + (b.dir.y * BULLET_SPEED);
@@ -160,6 +162,7 @@ function update() {
     enemies.forEach(e => {
       if (pointsDistance(b.pos, e.pos) < 0.5) {
         e.life -= 10;
+        e.hit = true;
         b.lifetime = 0;
       }
     });
@@ -305,9 +308,10 @@ function update() {
 
   for (let i = 0; i < sprites.length; i++) {
     // translate sprite position to relative to camera
-    let spriteTexture = SPRITE_TEX[sprites[spriteOrder[i].order].sprite];
-    let spriteX = sprites[spriteOrder[i].order].pos.x - pos.x;
-    let spriteY = sprites[spriteOrder[i].order].pos.y - pos.y;
+    let currentSprite = sprites[spriteOrder[i].order];
+    let spriteTexture = SPRITE_TEX[currentSprite.sprite];
+    let spriteX = currentSprite.pos.x - pos.x;
+    let spriteY = currentSprite.pos.y - pos.y;
 
     // transform sprite with the inverse camera matrix
     // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
@@ -351,7 +355,7 @@ function update() {
       b: 14 * shadeFactor,
     };
 
-    gl.fillStyle = colorToString(color);
+    gl.fillStyle = currentSprite.hit ? 'white' : colorToString(color);
 
     // loop through every vertical stripe of the sprite on screen
     for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
