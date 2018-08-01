@@ -169,9 +169,11 @@ function update() {
     }
 
     enemies.forEach(e => {
+      // Bullet hits enemy
       if (pointsDistance(b.pos, e.pos) < 0.5) {
-        e.life -= 34;
+        e.life -= 15;
         e.hit = true;
+        e.pos = vecSub(e.pos, vecMul(b.dir, -0.4));
         b.lifetime = 0;
       }
     });
