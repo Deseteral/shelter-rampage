@@ -69,9 +69,6 @@ const enemies = [
 
 let bullets = [];
 
-const zBuffer = []; // for every vertical line
-const spriteOrder = [];
-
 const offscreen = document.createElement('canvas');
 offscreen.width = bufferWidth;
 offscreen.height = bufferHeight;
@@ -167,6 +164,9 @@ function update() {
   });
 
   // Render world
+  const zBuffer = []; // for every vertical line
+  const spriteOrder = [];
+
   for (let x = 0; x < bufferWidth; x++) {
     const cameraX = ((2 * x) / bufferWidth) - 1;
     const rayDirX = dir.x + (plane.x * cameraX);
@@ -221,10 +221,6 @@ function update() {
       }
 
       // Check if ray has hit a wall
-      // if (!MAP[mapX]) {
-      //   hit = true;
-      //   continue;
-      // }
       if (MAP[mapX][mapY] > 0) {
         hit = true;
       }
