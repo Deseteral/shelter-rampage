@@ -3,10 +3,9 @@ let state = {
   down: false,
   left: false,
   right: false,
-  rotateLeft: false,
-  rotateRight: false,
   shoot: false,
   debug: false,
+  rotate: 0,
 };
 
 let KEY_CODES = {
@@ -14,11 +13,21 @@ let KEY_CODES = {
   83: 'down',
   65: 'left',
   68: 'right',
-  37: 'rotateLeft',
-  39: 'rotateRight',
   32: 'shoot',
   191: 'debug',
 };
+
+document.addEventListener('mousemove', e => {
+  state.rotate = e.movementX;
+});
+
+document.addEventListener('mousedown', e => {
+  state.shoot = (e.button === 0);
+});
+
+document.addEventListener('mouseup', () => {
+  state.shoot = false;
+});
 
 document.addEventListener('keydown', e => {
   state[KEY_CODES[e.keyCode]] = true;

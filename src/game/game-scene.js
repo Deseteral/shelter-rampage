@@ -433,23 +433,14 @@ function update() {
     if (checkMapCollision(pos.x, dy)) pos.y = dy;
   }
 
-  if (keyState.rotateRight) {
-    const oldDirX = dir.x;
-    dir.x = (dir.x * Math.cos(-playerRotateSpeed)) - (dir.y * Math.sin(-playerRotateSpeed));
-    dir.y = (oldDirX * Math.sin(-playerRotateSpeed)) + (dir.y * Math.cos(-playerRotateSpeed));
-    const oldPlaneX = plane.x;
-    plane.x = (plane.x * Math.cos(-playerRotateSpeed)) - (plane.y * Math.sin(-playerRotateSpeed));
-    plane.y = (oldPlaneX * Math.sin(-playerRotateSpeed)) + (plane.y * Math.cos(-playerRotateSpeed));
-  }
-
-  if (keyState.rotateLeft) {
-    const oldDirX = dir.x;
-    dir.x = (dir.x * Math.cos(playerRotateSpeed)) - (dir.y * Math.sin(playerRotateSpeed));
-    dir.y = (oldDirX * Math.sin(playerRotateSpeed)) + (dir.y * Math.cos(playerRotateSpeed));
-    const oldPlaneX = plane.x;
-    plane.x = (plane.x * Math.cos(playerRotateSpeed)) - (plane.y * Math.sin(playerRotateSpeed));
-    plane.y = (oldPlaneX * Math.sin(playerRotateSpeed)) + (plane.y * Math.cos(playerRotateSpeed));
-  }
+  // Rotate the player
+  const oldDirX = dir.x;
+  let playerRotateAmount = -keyState.rotate * playerRotateSpeed * 0.15;
+  dir.x = (dir.x * Math.cos(playerRotateAmount)) - (dir.y * Math.sin(playerRotateAmount));
+  dir.y = (oldDirX * Math.sin(playerRotateAmount)) + (dir.y * Math.cos(playerRotateAmount));
+  const oldPlaneX = plane.x;
+  plane.x = (plane.x * Math.cos(playerRotateAmount)) - (plane.y * Math.sin(playerRotateAmount));
+  plane.y = (oldPlaneX * Math.sin(playerRotateAmount)) + (plane.y * Math.cos(playerRotateAmount));
 
   if (keyState.shoot && shootingFrameTimeout <= 0) {
     bullets.push({
@@ -470,6 +461,8 @@ function update() {
     .filter(b => b.lifetime > 0);
 
   enemies = enemies.filter(e => e.life > 0);
+
+  keyState.rotate = 0;
 
   DEBUG_TIME_END('update');
   window.DEBUG = false;

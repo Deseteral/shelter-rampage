@@ -16,6 +16,8 @@ window.gameData = {
 // DEBUG: Map overview log
 console.log(window.gameData.map.map(a => a.map(s => (s ? '#' : ' ')).join('')).join('\n'));
 
+window.engine.c.onclick = () => window.engine.c.requestPointerLock();
+
 // const MAP = [
 //   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 //   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
