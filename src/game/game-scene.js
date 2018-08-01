@@ -50,8 +50,8 @@ const playerRotateSpeed = 0.03;
 
 const BULLET_SPEED = 0.5;
 const BULLET_LIFETIME_FRAMES = 60 * 3;
-const BULLET_FRAME_TIMEOUT_MAX = 7;
-let bulletFrameTimeout = BULLET_FRAME_TIMEOUT_MAX;
+const SHOOTING_FRAME_TIMEOUT_MAX = 7;
+let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
 
 const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
 
@@ -60,11 +60,11 @@ const SPRITE_TEX = {
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
 };
 
-const enemies = [
-  { sprite: 'e1', pos: { x: 14, y: 12 } },
-  { sprite: 'e1', pos: { x: 10, y: 15 } },
-  { sprite: 'e1', pos: { x: 21.5, y: 8 } },
-  { sprite: 'e1', pos: { x: 13, y: 13 } },
+let enemies = [
+  { sprite: 'e1', pos: { x: 14, y: 12 }, life: 100 },
+  { sprite: 'e1', pos: { x: 10, y: 15 }, life: 100 },
+  { sprite: 'e1', pos: { x: 21.5, y: 8 }, life: 100 },
+  { sprite: 'e1', pos: { x: 13, y: 13 }, life: 100 },
 ];
 
 let bullets = [];
@@ -149,6 +149,11 @@ const MAP = generateMap();
 console.log(MAP.map(a => a.map(s => (s ? '#' : ' ')).join('')).join('\n'));
 
 function update() {
+  const keyState = getKeyState();
+
+  // DEBUG: Remove this
+  if (keyState.debug) window.DEBUG = true;
+
   DEBUG_TIME('update');
 
   const { pos, dir, plane } = gameData;
@@ -159,7 +164,6 @@ function update() {
 
   // Update world
   bullets.forEach(b => {
-    // checkMapCollision(dx, pos.y)
     let dx = b.pos.x + (b.dir.x * BULLET_SPEED);
     let dy = b.pos.y + (b.dir.y * BULLET_SPEED);
     if (checkMapCollision(dx, dy)) {
@@ -390,13 +394,13 @@ function update() {
       dict[key] = true;
     }
 
-    console.log(`Distinct colors in frame: ${Object.keys(dict).length}`);
+    let colorCount = Object.keys(dict).length;
+    let level = colorCount > 32 ? 'error' : 'log';
+    console[level](`Distinct colors in frame: ${colorCount}`);
   }
 
   // Rendering end
   // Input processing
-  const keyState = getKeyState();
-
   if (keyState.up) {
     const dx = pos.x + (dir.x * playerMoveSpeed);
     const dy = pos.y + (dir.y * playerMoveSpeed);
@@ -445,22 +449,24 @@ function update() {
     plane.y = (oldPlaneX * Math.sin(playerRotateSpeed)) + (plane.y * Math.cos(playerRotateSpeed));
   }
 
-  if (keyState.shoot && bulletFrameTimeout <= 0) {
+  if (keyState.shoot && shootingFrameTimeout <= 0) {
     bullets.push({
       sprite: 'b',
       pos: { ...pos },
       dir: { ...dir },
       lifetime: BULLET_LIFETIME_FRAMES,
     });
-    bulletFrameTimeout = BULLET_FRAME_TIMEOUT_MAX;
+    shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
   }
 
   // Process frame timers
-  bulletFrameTimeout--;
+  shootingFrameTimeout--;
 
   bullets = bullets
     .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
     .filter(b => b.lifetime > 0);
+
+  enemies = enemies.filter(e => e.life > 0);
 
   DEBUG_TIME_END('update');
   window.DEBUG = false;
