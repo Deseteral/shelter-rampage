@@ -159,8 +159,14 @@ function update() {
 
   // Update world
   bullets.forEach(b => {
-    b.pos.x += b.dir.x * BULLET_SPEED;
-    b.pos.y += b.dir.y * BULLET_SPEED;
+    // checkMapCollision(dx, pos.y)
+    let dx = b.pos.x + (b.dir.x * BULLET_SPEED);
+    let dy = b.pos.y + (b.dir.y * BULLET_SPEED);
+    if (checkMapCollision(dx, dy)) {
+      b.pos = { x: dx, y: dy };
+    } else {
+      b.lifetime = 0;
+    }
   });
 
   // Render world
