@@ -14,6 +14,14 @@ const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const checkMapCollision = (x, y) => gameData.map[x | 0][y | 0] === 0;
 const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
 const pointsDistance = (a, b) => Math.sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
+const vecAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+const vecSubtract = (a, b) => ({ x: a.x - b.x, y: a.y - b.y }); // TODO: Use vecAdd for this
+const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
+const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
+const dirVecPoints = (a, b) => {
+  let vec = vecSubtract(b, a);
+  return vecDiv(vec, vecLen(vec));
+};
 
 const textureSize = 8;
 const bufferWidth = 90;
@@ -41,14 +49,8 @@ function randomInt(min, max) {
 }
 
 let enemies = [];
-// let enemies = [
-//   { sprite: 'e1', pos: { x: 14, y: 12 }, life: 100 },
-//   { sprite: 'e1', pos: { x: 10, y: 15 }, life: 100 },
-//   { sprite: 'e1', pos: { x: 21.5, y: 8 }, life: 100 },
-//   { sprite: 'e1', pos: { x: 13, y: 13 }, life: 100 },
-// ];
 
-for (let i = 0; i < 250; i++) {
+for (let i = 0; i < 50; i++) {
   enemies.push({
     sprite: 'e1',
     pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
@@ -147,7 +149,11 @@ function update() {
   gl.fillRect(0, 0, bufferWidth, bufferHeight);
 
   // Update world
-  enemies = enemies.map(e => ({ ...e, hit: false }));
+  enemies = enemies.map(e => ({
+    ...e,
+    pos: vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, pos), 40)),
+    hit: false,
+  }));
 
   bullets.forEach(b => {
     let dx = b.pos.x + (b.dir.x * BULLET_SPEED);
@@ -161,7 +167,7 @@ function update() {
 
     enemies.forEach(e => {
       if (pointsDistance(b.pos, e.pos) < 0.5) {
-        e.life -= 10;
+        e.life -= 34;
         e.hit = true;
         b.lifetime = 0;
       }
