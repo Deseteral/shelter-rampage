@@ -5,6 +5,7 @@ let state = {
   right: false,
   rotateLeft: false,
   rotateRight: false,
+  shoot: false,
 };
 
 let KEY_CODES = {
@@ -14,6 +15,7 @@ let KEY_CODES = {
   68: 'right',
   37: 'rotateLeft',
   39: 'rotateRight',
+  32: 'shoot',
 };
 
 document.addEventListener('keydown', e => {

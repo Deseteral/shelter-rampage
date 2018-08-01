@@ -44,19 +44,30 @@ const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => pars
 const textureSize = 8;
 const bufferWidth = 90;
 const bufferHeight = 100;
+
 const playerMoveSpeed = 0.1;
 const playerRotateSpeed = 0.03;
 
+const BULLET_SPEED = 0.5;
+const BULLET_LIFETIME_FRAMES = 60 * 3;
+const BULLET_FRAME_TIMEOUT_MAX = 7;
+let bulletFrameTimeout = BULLET_FRAME_TIMEOUT_MAX;
+
 const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
-const testEnemyTexture = textureUnpack('0000000000011000001111000010010000111100010010100101101010010101');
-const bulletTexture = textureUnpack('0000000000000000000000000011110001111110011111100111111000111100');
+
+const SPRITE_TEX = {
+  e1: textureUnpack('0000000000011000001111000010010000111100010010100101101010010101'),
+  b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
+};
 
 const enemies = [
-  { x: 14, y: 12 },
-  { x: 10, y: 15 },
-  { x: 21.5, y: 8 },
-  { x: 13, y: 13 },
+  { sprite: 'e1', pos: { x: 14, y: 12 } },
+  { sprite: 'e1', pos: { x: 10, y: 15 } },
+  { sprite: 'e1', pos: { x: 21.5, y: 8 } },
+  { sprite: 'e1', pos: { x: 13, y: 13 } },
 ];
+
+let bullets = [];
 
 const zBuffer = []; // for every vertical line
 const spriteOrder = [];
@@ -148,6 +159,12 @@ function update() {
   // Clear buffer
   gl.fillStyle = 'black';
   gl.fillRect(0, 0, bufferWidth, bufferHeight);
+
+  // Update world
+  bullets.forEach(b => {
+    b.pos.x += b.dir.x * BULLET_SPEED;
+    b.pos.y += b.dir.y * BULLET_SPEED;
+  });
 
   // Render world
   for (let x = 0; x < bufferWidth; x++) {
@@ -276,13 +293,13 @@ function update() {
   }
 
   // Sprite casting
-  const sprites = [].concat(enemies);
+  const sprites = [].concat(enemies, bullets);
 
   // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
   for (let i = 0; i < sprites.length; i++) {
     spriteOrder[i] = {
       order: i,
-      distance: (((pos.x - sprites[i].x) * (pos.x - sprites[i].x)) + ((pos.y - sprites[i].y) * (pos.y - sprites[i].y))),
+      distance: (((pos.x - sprites[i].pos.x) * (pos.x - sprites[i].pos.x)) + ((pos.y - sprites[i].pos.y) * (pos.y - sprites[i].pos.y))),
     };
   }
 
@@ -290,8 +307,9 @@ function update() {
 
   for (let i = 0; i < sprites.length; i++) {
     // translate sprite position to relative to camera
-    let spriteX = sprites[spriteOrder[i].order].x - pos.x;
-    let spriteY = sprites[spriteOrder[i].order].y - pos.y;
+    let spriteTexture = SPRITE_TEX[sprites[spriteOrder[i].order].sprite];
+    let spriteX = sprites[spriteOrder[i].order].pos.x - pos.x;
+    let spriteY = sprites[spriteOrder[i].order].pos.y - pos.y;
 
     // transform sprite with the inverse camera matrix
     // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
@@ -351,8 +369,8 @@ function update() {
           let d = (((y - vMoveScreen) * 256) - (bufferHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
           let texY = (((d * textureSize) / spriteHeight) / 256) | 0;
 
-          if (!testEnemyTexture[texY]) continue;
-          if (testEnemyTexture[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
+          if (!spriteTexture[texY]) continue;
+          if (spriteTexture[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
         }
       }
     }
@@ -424,6 +442,23 @@ function update() {
     plane.x = (plane.x * Math.cos(playerRotateSpeed)) - (plane.y * Math.sin(playerRotateSpeed));
     plane.y = (oldPlaneX * Math.sin(playerRotateSpeed)) + (plane.y * Math.cos(playerRotateSpeed));
   }
+
+  if (keyState.shoot && bulletFrameTimeout <= 0) {
+    bullets.push({
+      sprite: 'b',
+      pos: { ...pos },
+      dir: { ...dir },
+      lifetime: BULLET_LIFETIME_FRAMES,
+    });
+    bulletFrameTimeout = BULLET_FRAME_TIMEOUT_MAX;
+  }
+
+  // Process frame timers
+  bulletFrameTimeout--;
+
+  bullets = bullets
+    .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
+    .filter(b => b.lifetime > 0);
 
   DEBUG_TIME_END('update');
   window.DEBUG = false;
