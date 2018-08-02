@@ -146,7 +146,7 @@ function update() {
 
   DEBUG_TIME('update');
 
-  const { pos, dir, plane } = gameData;
+  const { player, plane } = gameData;
 
   // Clear buffer
   gl.fillStyle = 'black';
@@ -155,11 +155,11 @@ function update() {
   // Update world
   enemies.forEach(e => {
     let canMove = true;
-    let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, pos), 40));
+    let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, player.pos), 40));
     enemies.forEach(ee => {
       if (ee === e) return;
       if (pointsDistance(dp, ee.pos) <= 0.5) canMove = false;
-      if (pointsDistance(dp, pos) <= 0.5) canMove = false;
+      if (pointsDistance(dp, player.pos) <= 0.5) canMove = false;
     });
 
     if (canMove) e.pos = dp;
@@ -192,11 +192,11 @@ function update() {
 
   for (let x = 0; x < bufferWidth; x++) {
     const cameraX = ((2 * x) / bufferWidth) - 1;
-    const rayDirX = dir.x + (plane.x * cameraX);
-    const rayDirY = dir.y + (plane.y * cameraX);
+    const rayDirX = player.dir.x + (plane.x * cameraX);
+    const rayDirY = player.dir.y + (plane.y * cameraX);
 
-    let mapX = pos.x | 0;
-    let mapY = pos.y | 0;
+    let mapX = player.pos.x | 0;
+    let mapY = player.pos.y | 0;
 
     // length of ray from current position to next x or y-side
     let sideDistX;
@@ -216,18 +216,18 @@ function update() {
 
     if (rayDirX < 0) {
       stepX = -1;
-      sideDistX = (pos.x - mapX) * deltaDistX;
+      sideDistX = (player.pos.x - mapX) * deltaDistX;
     } else {
       stepX = 1;
-      sideDistX = ((mapX + 1) - pos.x) * deltaDistX;
+      sideDistX = ((mapX + 1) - player.pos.x) * deltaDistX;
     }
 
     if (rayDirY < 0) {
       stepY = -1;
-      sideDistY = (pos.y - mapY) * deltaDistY;
+      sideDistY = (player.pos.y - mapY) * deltaDistY;
     } else {
       stepY = 1;
-      sideDistY = ((mapY + 1) - pos.y) * deltaDistY;
+      sideDistY = ((mapY + 1) - player.pos.y) * deltaDistY;
     }
 
     // perform DDA
@@ -251,9 +251,9 @@ function update() {
 
     // Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
     if (side === 0) {
-      perpWallDist = ((mapX - pos.x) + ((1 - stepX) / 2)) / rayDirX;
+      perpWallDist = ((mapX - player.pos.x) + ((1 - stepX) / 2)) / rayDirX;
     } else {
-      perpWallDist = ((mapY - pos.y) + ((1 - stepY) / 2)) / rayDirY;
+      perpWallDist = ((mapY - player.pos.y) + ((1 - stepY) / 2)) / rayDirY;
     }
 
     // Calculate height of line to draw on screen
@@ -275,9 +275,9 @@ function update() {
     // calculate value of wallX
     let wallX; // where exactly the wall was hit
     if (side === 0) {
-      wallX = pos.y + (perpWallDist * rayDirY);
+      wallX = player.pos.y + (perpWallDist * rayDirY);
     } else {
-      wallX = pos.x + (perpWallDist * rayDirX);
+      wallX = player.pos.x + (perpWallDist * rayDirX);
     }
     wallX -= Math.floor(wallX); // This actually has to be floored, this is not int casting
 
@@ -313,7 +313,7 @@ function update() {
   for (let i = 0; i < sprites.length; i++) {
     spriteOrder[i] = {
       order: i,
-      distance: (((pos.x - sprites[i].pos.x) * (pos.x - sprites[i].pos.x)) + ((pos.y - sprites[i].pos.y) * (pos.y - sprites[i].pos.y))),
+      distance: (((player.pos.x - sprites[i].pos.x) * (player.pos.x - sprites[i].pos.x)) + ((player.pos.y - sprites[i].pos.y) * (player.pos.y - sprites[i].pos.y))),
     };
   }
 
@@ -323,17 +323,17 @@ function update() {
     // translate sprite position to relative to camera
     let currentSprite = sprites[spriteOrder[i].order];
     let spriteTexture = SPRITE_TEX[currentSprite.sprite];
-    let spriteX = currentSprite.pos.x - pos.x;
-    let spriteY = currentSprite.pos.y - pos.y;
+    let spriteX = currentSprite.pos.x - player.pos.x;
+    let spriteY = currentSprite.pos.y - player.pos.y;
 
     // transform sprite with the inverse camera matrix
     // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
     // [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
     // [ planeY   dirY ]                                          [ -planeY  planeX ]
 
-    let invDet = 1.0 / ((plane.x * dir.y) - (dir.x * plane.y)); // required for correct matrix multiplication
+    let invDet = 1.0 / ((plane.x * player.dir.y) - (player.dir.x * plane.y)); // required for correct matrix multiplication
 
-    let transformX = invDet * ((dir.y * spriteX) - (dir.x * spriteY));
+    let transformX = invDet * ((player.dir.y * spriteX) - (player.dir.x * spriteY));
     let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
 
     let spriteScreenX = ((bufferWidth / 2) * (1 + (transformX / transformY))) | 0;
@@ -407,39 +407,39 @@ function update() {
 
   // Rendering end
   // Input processing
-  let forwardVector = vecMul(dir, playerMoveSpeed);
+  let forwardVector = vecMul(player.dir, playerMoveSpeed);
 
   if (keyState.up) {
-    let d = vecAdd(pos, forwardVector);
-    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
-    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
+    let d = vecAdd(player.pos, forwardVector);
+    if (checkMapCollision(d.x, player.pos.y)) player.pos.x = d.x;
+    if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
   }
 
   if (keyState.down) {
-    let d = vecSub(pos, forwardVector);
-    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
-    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
+    let d = vecSub(player.pos, forwardVector);
+    if (checkMapCollision(d.x, player.pos.y)) player.pos.x = d.x;
+    if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
   }
 
-  let sideVector = vecMul({ x: -1 * dir.y, y: dir.x }, (playerMoveSpeed * 0.5));
+  let sideVector = vecMul({ x: -1 * player.dir.y, y: player.dir.x }, (playerMoveSpeed * 0.5));
 
   if (keyState.right) {
-    let d = vecSub(pos, sideVector);
-    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
-    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
+    let d = vecSub(player.pos, sideVector);
+    if (checkMapCollision(d.x, player.pos.y)) player.pos.x = d.x;
+    if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
   }
 
   if (keyState.left) {
-    let d = vecAdd(pos, sideVector);
-    if (checkMapCollision(d.x, pos.y)) pos.x = d.x;
-    if (checkMapCollision(pos.x, d.y)) pos.y = d.y;
+    let d = vecAdd(player.pos, sideVector);
+    if (checkMapCollision(d.x, player.pos.y)) player.pos.x = d.x;
+    if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
   }
 
   // Rotate the player
-  const oldDirX = dir.x;
+  const oldDirX = player.dir.x;
   let playerRotateAmount = -keyState.rotate * playerRotateSpeed * 0.15;
-  dir.x = (dir.x * Math.cos(playerRotateAmount)) - (dir.y * Math.sin(playerRotateAmount));
-  dir.y = (oldDirX * Math.sin(playerRotateAmount)) + (dir.y * Math.cos(playerRotateAmount));
+  player.dir.x = (player.dir.x * Math.cos(playerRotateAmount)) - (player.dir.y * Math.sin(playerRotateAmount));
+  player.dir.y = (oldDirX * Math.sin(playerRotateAmount)) + (player.dir.y * Math.cos(playerRotateAmount));
   const oldPlaneX = plane.x;
   plane.x = (plane.x * Math.cos(playerRotateAmount)) - (plane.y * Math.sin(playerRotateAmount));
   plane.y = (oldPlaneX * Math.sin(playerRotateAmount)) + (plane.y * Math.cos(playerRotateAmount));
@@ -447,8 +447,8 @@ function update() {
   if (keyState.shoot && shootingFrameTimeout <= 0) {
     bullets.push({
       sprite: 'b',
-      pos: { ...pos },
-      dir: { ...dir },
+      pos: { ...player.pos },
+      dir: { ...player.dir },
       lifetime: BULLET_LIFETIME_FRAMES,
     });
     shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
