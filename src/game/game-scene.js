@@ -153,11 +153,18 @@ function update() {
   gl.fillRect(0, 0, bufferWidth, bufferHeight);
 
   // Update world
-  enemies = enemies.map(e => ({
-    ...e,
-    pos: vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, pos), 40)),
-    hit: false,
-  }));
+  enemies.forEach(e => {
+    let canMove = true;
+    let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, pos), 40));
+    enemies.forEach(ee => {
+      if (ee === e) return;
+      if (pointsDistance(dp, ee.pos) <= 0.5) canMove = false;
+      if (pointsDistance(dp, pos) <= 0.5) canMove = false;
+    });
+
+    if (canMove) e.pos = dp;
+    e.hit = false;
+  });
 
   bullets.forEach(b => {
     let d = vecAdd(b.pos, vecMul(b.dir, BULLET_SPEED));
