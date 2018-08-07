@@ -180,7 +180,16 @@ function update() {
       if (pointsDistance(b.pos, e.pos) < 0.5) {
         e.life -= 15;
         e.hit = true;
-        e.pos = vecSub(e.pos, vecMul(b.dir, -0.4));
+
+        let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
+        let canRecoil = true;
+        enemies.forEach(ee => {
+          if (e === ee) return;
+          if (pointsDistance(dp, ee.pos) <= 0.5) canRecoil = false;
+        });
+
+        if (canRecoil) e.pos = dp;
+
         b.lifetime = 0;
       }
     });
