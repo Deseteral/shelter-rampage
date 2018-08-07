@@ -46,11 +46,11 @@ const SPRITE_TEX = {
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
 };
 
-function randomInt(min, max) {
+const randomInt = (min, max) => {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * ((max - min) + 1)) + min;
-}
+};
 
 let enemies = [];
 
@@ -388,7 +388,11 @@ function update() {
   }
 
   // Render offscreen buffer
-  engine.gl.drawImage(offscreen, 0, 0, 360, 400);
+  const playerIsShooting = keyState.shoot && shootingFrameTimeout <= 0;
+  const shakeX = playerIsShooting ? (2 - randomInt(0, 4)) : 0;
+  const shakeY = playerIsShooting ? (2 - randomInt(0, 4)) : 0;
+
+  engine.gl.drawImage(offscreen, shakeX, shakeY, 360, 400);
 
   // TODO: DEBUG: Remove this
   if (window.DEBUG) {
@@ -444,7 +448,7 @@ function update() {
   plane.x = (plane.x * Math.cos(playerRotateAmount)) - (plane.y * Math.sin(playerRotateAmount));
   plane.y = (oldPlaneX * Math.sin(playerRotateAmount)) + (plane.y * Math.cos(playerRotateAmount));
 
-  if (keyState.shoot && shootingFrameTimeout <= 0) {
+  if (playerIsShooting) {
     bullets.push({
       sprite: 'b',
       pos: { ...player.pos },
