@@ -19,13 +19,40 @@ const vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
 const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
 const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
 const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
-const dirVecPoints = (from, to) => {
-  let vec = vecSub(to, from);
-  return vecDiv(vec, vecLen(vec));
-};
+const vecNorm = (a) => vecDiv(a, vecLen(a));
+const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
+
+const randomFloat = (min, max) => Math.random() * ((max - min) + 1) + min;
+const randomInt = (min, max) => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * ((max - min) + 1)) + min;
+};
+const randomDir = () => vecNorm({ x: 1 - randomFloat(0, 2), y: 1 - randomFloat(0, 2) });
+
+const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
+const canEnemySeePlayer = (enemy, player) => {
+  if (pointsDistance(enemy.pos, player.pos) > 5) return false;
+
+  let dirVec = dirVecPoints(enemy.pos, player.pos);
+  let castPos = { ...enemy.pos };
+  let hit = false;
+  while (true) {
+    if (pointsDistance(castPos, player.pos) <= 0.5) {
+      hit = true;
+      break;
+    }
+
+    if (!checkMapCollision(castPos.x, castPos.y)) break; // wall hit
+
+    castPos = vecAdd(castPos, dirVec);
+  }
+
+  return hit;
+};
 
 const textureSize = 8;
 const bufferWidth = 90;
@@ -48,12 +75,6 @@ const testWallTexture = textureUnpack('00000000011001100110011000000000001111000
 const SPRITE_TEX = {
   e1: textureUnpack('0000000000011000001111000010010000111100010010100101101010010101'),
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
-};
-
-const randomInt = (min, max) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * ((max - min) + 1)) + min;
 };
 
 let enemies = [];
@@ -158,16 +179,37 @@ function update() {
 
   // Update world
   enemies.forEach(e => {
-    let canMove = true;
-    let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, player.pos), 40));
+    e.hit = false;
+
+    e.changeDirTimer--;
+    if (e.changeDirTimer <= 0) {
+      e.dir = randomDir();
+      e.changeDirTimer = enemyDirTimer();
+    }
+
+    if (!checkMapCollision(e.pos.x, e.pos.y)) {
+      e.dir = vecMul(e.dir, -1);
+    }
+
     enemies.forEach(ee => {
       if (ee === e) return;
-      if (pointsDistance(dp, ee.pos) <= 0.5) canMove = false;
-      if (pointsDistance(dp, player.pos) <= 0.5) canMove = false;
+      if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
+      // if (pointsDistance(dp, player.pos) <= 0.5) canMove = false; // TODO: What if enemy hits the player
     });
 
-    if (canMove) e.pos = dp;
-    e.hit = false;
+    if (canEnemySeePlayer(e, player)) e.dir = dirVecPoints(e.pos, player.pos);
+
+    e.pos = vecAdd(e.pos, vecDiv(e.dir, 50));
+
+    // let canMove = false;
+    // let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, player.pos), 40));
+    // enemies.forEach(ee => {
+    //   if (ee === e) return;
+    //   if (pointsDistance(dp, ee.pos) <= 0.5) canMove = false;
+    //   if (pointsDistance(dp, player.pos) <= 0.5) canMove = false;
+    // });
+
+    // if (canMove) e.pos = dp;
   });
 
   bullets.forEach(b => {
@@ -475,6 +517,8 @@ function update() {
     enemies.push({
       sprite: 'e1',
       pos: vecAdd(player.pos, vecMul(player.dir, 2)),
+      dir: randomDir(),
+      changeDirTimer: enemyDirTimer(),
       life: 100,
     });
 
