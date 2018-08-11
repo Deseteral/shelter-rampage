@@ -79,13 +79,15 @@ const SPRITE_TEX = {
 
 let enemies = [];
 
-// for (let i = 0; i < 50; i++) {
-//   enemies.push({
-//     sprite: 'e1',
-//     pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
-//     life: 100,
-//   });
-// }
+for (let i = 0; i < 50; i++) {
+  enemies.push({
+    sprite: 'e1',
+    pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
+    dir: randomDir(),
+    changeDirTimer: enemyDirTimer(),
+    life: 100,
+  });
+}
 
 let bullets = [];
 
