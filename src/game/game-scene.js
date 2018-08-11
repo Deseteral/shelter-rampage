@@ -19,8 +19,8 @@ const vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
 const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
 const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
 const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
-const dirVecPoints = (a, b) => {
-  let vec = vecSub(b, a);
+const dirVecPoints = (from, to) => {
+  let vec = vecSub(to, from);
   return vecDiv(vec, vecLen(vec));
 };
 
