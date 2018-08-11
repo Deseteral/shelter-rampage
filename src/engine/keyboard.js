@@ -5,6 +5,7 @@ let state = {
   right: false,
   shoot: false,
   debug: false,
+  debugSpawnEnemy: false, // TODO: DEBUG: Remove
   rotate: 0,
 };
 
@@ -14,6 +15,7 @@ let KEY_CODES = {
   65: 'left',
   68: 'right',
   32: 'shoot',
+  75: 'debugSpawnEnemy', // TODO: DEBUG: Remove
   191: 'debug',
 };
 

@@ -39,6 +39,10 @@ const BULLET_LIFETIME_FRAMES = 60 * 3;
 const SHOOTING_FRAME_TIMEOUT_MAX = 7;
 let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
 
+// TODO: DEBUG: Remove
+const DEBUG_SPAWN_TIMEOUT_MAX = 60;
+let debugSpawnFrameTimeout = DEBUG_SPAWN_TIMEOUT_MAX;
+
 const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
 
 const SPRITE_TEX = {
@@ -54,13 +58,13 @@ const randomInt = (min, max) => {
 
 let enemies = [];
 
-for (let i = 0; i < 50; i++) {
-  enemies.push({
-    sprite: 'e1',
-    pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
-    life: 100,
-  });
-}
+// for (let i = 0; i < 50; i++) {
+//   enemies.push({
+//     sprite: 'e1',
+//     pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
+//     life: 100,
+//   });
+// }
 
 let bullets = [];
 
@@ -467,9 +471,20 @@ function update() {
     shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
   }
 
+  if (keyState.debugSpawnEnemy && debugSpawnFrameTimeout <= 0) {
+    enemies.push({
+      sprite: 'e1',
+      pos: vecAdd(player.pos, vecMul(player.dir, 2)),
+      life: 100,
+    });
+
+    debugSpawnFrameTimeout = DEBUG_SPAWN_TIMEOUT_MAX;
+  }
+
   // Process frame timers
   // TODO: Perhaps I should move this between update and render
   shootingFrameTimeout--;
+  debugSpawnFrameTimeout--;
 
   bullets = bullets
     .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
