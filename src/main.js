@@ -18,6 +18,17 @@ window.gameData = {
 // TODO: DEBUG: Map overview log
 console.log(window.gameData.map.map(a => a.map(s => (s ? '#' : ' ')).join('')).join('\n'));
 
+// TODO: DEBUG: Remove minimap
+const minimap = document.createElement('canvas');
+minimap.id = 'minimap';
+minimap.width = 64;
+minimap.height = 64;
+minimap.style.position = 'absolute';
+minimap.style.width = '256px';
+minimap.style['image-rendering'] = 'pixelated';
+document.body.insertBefore(minimap, document.body.firstChild);
+window.gameData.minimap = minimap;
+
 window.engine.c.onclick = () => window.engine.c.requestPointerLock();
 
 engine.gl = engine.c.getContext('2d');

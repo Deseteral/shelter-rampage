@@ -82,7 +82,7 @@ let enemies = [];
 for (let i = 0; i < 50; i++) {
   enemies.push({
     sprite: 'e1',
-    pos: { x: randomInt(0, 64), y: randomInt(0, 64) },
+    pos: { x: randomInt(2, 60), y: randomInt(2, 60) },
     dir: randomDir(),
     changeDirTimer: enemyDirTimer(),
     life: 100,
@@ -146,14 +146,6 @@ const generateMap = () => {
     m = newMap;
   }
 
-  // Clear single neighbours
-  // for (let y = 0; y < size; y++) {
-  //   for (let x = 0; x < size; x++) {
-  //     let nc = countNeighbours(x, y);
-  //     if (nc === 1) m[x][y] = 0;
-  //   }
-  // }
-
   // Make walls
   m[0] = Array(size).fill(1);
   m[size - 1] = Array(size).fill(1);
@@ -165,6 +157,8 @@ const generateMap = () => {
   return m;
 };
 
+window.DEBUG_minimap = true;
+
 function update() {
   const keyState = getKeyState();
 
@@ -175,9 +169,19 @@ function update() {
 
   const { player, plane } = gameData;
 
+  // TODO: DEBUG: Remove minimap
+  const { minimap } = gameData;
+  const minimapGl = minimap.getContext('2d');
+  minimapGl.imageSmoothingEnabled = false;
+  minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
+
   // Clear buffer
   gl.fillStyle = 'black';
   gl.fillRect(0, 0, bufferWidth, bufferHeight);
+
+  // TODO: DEBUG: Remove minimap
+  minimapGl.fillStyle = 'black';
+  minimapGl.fillRect(0, 0, 64, 64);
 
   // Update world
   enemies.forEach(e => {
@@ -202,16 +206,6 @@ function update() {
     if (canEnemySeePlayer(e, player)) e.dir = dirVecPoints(e.pos, player.pos);
 
     e.pos = vecAdd(e.pos, vecDiv(e.dir, 50));
-
-    // let canMove = false;
-    // let dp = vecAdd(e.pos, vecDiv(dirVecPoints(e.pos, player.pos), 40));
-    // enemies.forEach(ee => {
-    //   if (ee === e) return;
-    //   if (pointsDistance(dp, ee.pos) <= 0.5) canMove = false;
-    //   if (pointsDistance(dp, player.pos) <= 0.5) canMove = false;
-    // });
-
-    // if (canMove) e.pos = dp;
   });
 
   bullets.forEach(b => {
@@ -539,6 +533,21 @@ function update() {
   enemies = enemies.filter(e => e.life > 0);
 
   keyState.rotate = 0;
+
+  // TODO: DEBUG: Remove minimap
+  // Draw minimap
+  if (window.DEBUG_minimap) {
+    minimapGl.fillStyle = 'white';
+    for (let y = 0; y < 64; y++) {
+      for (let x = 0; x < 64; x++) {
+        if (gameData.map[x][y] !== 0) minimapGl.fillRect(x, y, 1, 1);
+      }
+    }
+    minimapGl.fillStyle = 'yellow';
+    enemies.forEach(e => minimapGl.fillRect(e.pos.x | 0, e.pos.y | 0, 1, 1));
+    minimapGl.fillStyle = 'red';
+    minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
+  }
 
   DEBUG_TIME_END('update');
   window.DEBUG = false;
