@@ -21,8 +21,8 @@ console.log(window.gameData.map.map(a => a.map(s => (s ? '#' : ' ')).join('')).j
 // TODO: DEBUG: Remove minimap
 const minimap = document.createElement('canvas');
 minimap.id = 'minimap';
-minimap.width = 64;
-minimap.height = 64;
+minimap.width = 32;
+minimap.height = 32;
 minimap.style.position = 'absolute';
 minimap.style.width = '256px';
 minimap.style['image-rendering'] = 'pixelated';

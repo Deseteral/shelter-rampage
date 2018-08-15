@@ -79,10 +79,11 @@ const SPRITE_TEX = {
 
 let enemies = [];
 
-for (let i = 0; i < 50; i++) {
+const MAP_SIZE = 32;
+for (let i = 0; i < 10; i++) {
   enemies.push({
     sprite: 'e1',
-    pos: { x: randomInt(2, 60), y: randomInt(2, 60) },
+    pos: { x: randomInt(1, MAP_SIZE - 1), y: randomInt(1, MAP_SIZE) },
     dir: randomDir(),
     changeDirTimer: enemyDirTimer(),
     life: 100,
@@ -97,23 +98,24 @@ offscreen.height = bufferHeight;
 const gl = offscreen.getContext('2d');
 
 const generateMap = () => {
-  const size = 64;
-  const newArray = () => Array(size).fill([]).map(() => Array(size).fill(0));
+  const newArray = () => Array(MAP_SIZE).fill([]).map(() => Array(MAP_SIZE).fill(0));
   let m = newArray();
 
-  const numberOfSteps = 1;
-  const birthLimit = 2;
-  const deathLimit = 4;
-  const chanceToStartAlive = 0.5;
+  const numberOfSteps = 10;
+  const birthLimit = 5;
+  const deathLimit = 4; // not more than 8
+  const chanceToStartAlive = 0.49;
 
   const countNeighbours = (x, y) => {
     let count = 0;
-    [-1, 1].forEach(i => {
-      [-1, 1].forEach(j => {
+    [-1, 0, 1].forEach(i => {
+      [-1, 0, 1].forEach(j => {
+        if (i === 0 && j === 0) return;
+
         let nx = x + i;
         let ny = y + j;
 
-        if ((nx < 0 || ny < 0 || nx >= size || ny >= size) || m[nx][ny]) {
+        if ((nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) || m[nx][ny]) {
           count++;
         }
       });
@@ -122,8 +124,8 @@ const generateMap = () => {
   };
 
   // Initialization
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
+  for (let y = 0; y < MAP_SIZE; y++) {
+    for (let x = 0; x < MAP_SIZE; x++) {
       m[x][y] = Math.random() < chanceToStartAlive ? 1 : 0;
     }
   }
@@ -131,8 +133,8 @@ const generateMap = () => {
   // Simulation step
   for (let step = 0; step < numberOfSteps; step++) {
     let newMap = newArray();
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
         let nc = countNeighbours(x, y);
         if (m[x][y]) {
           newMap[x][y] = nc < deathLimit ? 0 : 1;
@@ -147,12 +149,19 @@ const generateMap = () => {
   }
 
   // Make walls
-  m[0] = Array(size).fill(1);
-  m[size - 1] = Array(size).fill(1);
+  m[0] = Array(MAP_SIZE).fill(1);
+  m[MAP_SIZE - 1] = Array(MAP_SIZE).fill(1);
   m.forEach(c => {
     c[0] = 1;
-    c[size - 1] = 1;
+    c[MAP_SIZE - 1] = 1;
   });
+
+  // 1. Pick middle tile
+  // 2. If wall -> regenerate map
+  // 3. Make flood fill
+  // 4. If tile was not marked as active -> set to wall
+  // 5. Place enemies
+  // 6. Place the player
 
   return m;
 };
@@ -181,7 +190,7 @@ function update() {
 
   // TODO: DEBUG: Remove minimap
   minimapGl.fillStyle = 'black';
-  minimapGl.fillRect(0, 0, 64, 64);
+  minimapGl.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
 
   // Update world
   enemies.forEach(e => {
@@ -538,8 +547,8 @@ function update() {
   // Draw minimap
   if (window.DEBUG_minimap) {
     minimapGl.fillStyle = 'white';
-    for (let y = 0; y < 64; y++) {
-      for (let x = 0; x < 64; x++) {
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
         if (gameData.map[x][y] !== 0) minimapGl.fillRect(x, y, 1, 1);
       }
     }
