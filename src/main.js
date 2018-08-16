@@ -2,7 +2,6 @@ import gameScene from './game/game-scene';
 
 window.engine = {
   c: document.getElementById('c'),
-  gl: null,
   scene: gameScene,
 };
 
@@ -11,11 +10,8 @@ engine.gl.imageSmoothingEnabled = false;
 engine.c.onclick = () => engine.c.requestPointerLock();
 
 window.gameData = {
-  player: {
-    dir: { x: 0.61, y: 0.79 },
-  },
+  player: { dir: { x: 0.61, y: 0.79 } },
   plane: { x: 0.52, y: -0.40 },
-  map: null,
 };
 
 // TODO: DEBUG: Remove minimap

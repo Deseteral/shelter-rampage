@@ -224,6 +224,26 @@ const generateMap = () => {
   return m;
 };
 
+const audioContext = new AudioContext();
+const gainNode = audioContext.createGain();
+// create a oscillator audio node
+const oscNode = audioContext.createOscillator();
+oscNode.type = 'triangle'; // sine, square, sawtooth, triangle
+// set a value in an AudioParam
+oscNode.frequency.value = 90;
+// be sure to connect the osc node to destination before starting it
+// oscNode.connect(audioContext.destination);
+oscNode.connect(gainNode);
+gainNode.connect(audioContext.destination);
+oscNode.start(); // start now
+gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+
+const soundShoot = () => {
+  oscNode.frequency.value = randomInt(90, 92);
+  gainNode.gain.setValueAtTime(0.75, audioContext.currentTime);
+  gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
+};
+
 window.DEBUG_minimap = true;
 
 function update() {
@@ -572,6 +592,7 @@ function update() {
       lifetime: BULLET_LIFETIME_FRAMES,
     });
     shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
+    soundShoot();
   }
 
   if (keyState.debugSpawnEnemy && debugSpawnFrameTimeout <= 0) {
