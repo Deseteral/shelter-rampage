@@ -1,15 +1,5 @@
 import getKeyState from '../engine/keyboard';
 
-// TODO: DEBUG: Remove this
-function DEBUG_TIME(name) {
-  if (window.DEBUG) console.time(name);
-}
-
-// TODO: DEBUG: Remove this
-function DEBUG_TIME_END(name) {
-  if (window.DEBUG) console.timeEnd(name);
-}
-
 const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -62,135 +52,36 @@ const canEnemySeePlayer = (enemy, player) => {
   return hit;
 };
 
-const textureSize = 8;
-const bufferWidth = 90;
-const bufferHeight = 100;
+const TEXTURE_SIZE = 8;
+const BUFFER_WIDTH = 90;
+const BUFFER_HEIGHT = 100;
+const MAP_SIZE = 32;
 
-const playerMoveSpeed = 0.1;
-const playerRotateSpeed = 0.03;
+const PLAYER_MOVE_SPEED = 0.1;
+const PLAYER_ROTATE_SPEED = 0.03;
 
 const BULLET_SPEED = 0.5;
 const BULLET_LIFETIME_FRAMES = 60 * 3;
 const SHOOTING_FRAME_TIMEOUT_MAX = 7;
 let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
 
+let enemies = [];
+let bullets = [];
+
 // TODO: DEBUG: Remove
 const DEBUG_SPAWN_TIMEOUT_MAX = 60;
 let debugSpawnFrameTimeout = DEBUG_SPAWN_TIMEOUT_MAX;
 
 const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
-
 const SPRITE_TEX = {
   e1: textureUnpack('0000000000011000001111000010010000111100010010100101101010010101'),
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
 };
 
-let enemies = [];
-
-const MAP_SIZE = 32;
-
-let bullets = [];
-
 const offscreen = document.createElement('canvas');
-offscreen.width = bufferWidth;
-offscreen.height = bufferHeight;
+offscreen.width = BUFFER_WIDTH;
+offscreen.height = BUFFER_HEIGHT;
 const gl = offscreen.getContext('2d');
-
-const celluarAutomata = () => {
-  let m = squareArray(MAP_SIZE);
-
-  const numberOfSteps = 10;
-  const birthLimit = 5;
-  const deathLimit = 4; // not more than 8
-  const chanceToStartAlive = 0.49;
-
-  const countNeighbours = (x, y) => {
-    let count = 0;
-    [-1, 0, 1].forEach(i => {
-      [-1, 0, 1].forEach(j => {
-        if (i === 0 && j === 0) return;
-
-        let nx = x + i;
-        let ny = y + j;
-
-        if ((nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) || m[nx][ny]) {
-          count++;
-        }
-      });
-    });
-    return count;
-  };
-
-  // Initialization
-  for (let y = 0; y < MAP_SIZE; y++) {
-    for (let x = 0; x < MAP_SIZE; x++) {
-      m[x][y] = Math.random() < chanceToStartAlive ? 1 : 0;
-    }
-  }
-
-  // Simulation step
-  for (let step = 0; step < numberOfSteps; step++) {
-    let newMap = squareArray(MAP_SIZE);
-    for (let y = 0; y < MAP_SIZE; y++) {
-      for (let x = 0; x < MAP_SIZE; x++) {
-        let nc = countNeighbours(x, y);
-        if (m[x][y]) {
-          newMap[x][y] = nc < deathLimit ? 0 : 1;
-        } else if (nc > birthLimit) {
-          newMap[x][y] = 1;
-        } else {
-          newMap[x][y] = 0;
-        }
-      }
-    }
-    m = newMap;
-  }
-
-  // Make walls
-  m[0] = Array(MAP_SIZE).fill(1);
-  m[MAP_SIZE - 1] = Array(MAP_SIZE).fill(1);
-  m.forEach(c => {
-    c[0] = 1;
-    c[MAP_SIZE - 1] = 1;
-  });
-
-  return m;
-};
-
-const removeClosedRooms = m => {
-  const floodMap = squareArray(MAP_SIZE);
-  const queue = [];
-
-  floodMap[MAP_SIZE / 2][MAP_SIZE / 2] = 1;
-  queue.push({ x: MAP_SIZE / 2, y: MAP_SIZE / 2 });
-
-  const markNeighbours = ({ x, y }) => {
-    [-1, 0, 1].forEach(i => {
-      [-1, 0, 1].forEach(j => {
-        if (i !== 0 && j !== 0) return;
-
-        let nx = x + i;
-        let ny = y + j;
-
-        if (
-          (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE) &&
-          (m[nx][ny] === 0 && floodMap[nx][ny] === 0)
-        ) {
-          floodMap[nx][ny] = 1;
-          queue.push({ x: nx, y: ny });
-        }
-      });
-    });
-  };
-
-  while (queue.length) markNeighbours(queue.shift());
-
-  for (let y = 0; y < MAP_SIZE; y++) {
-    for (let x = 0; x < MAP_SIZE; x++) {
-      if (m[x][y] === 0 && floodMap[x][y] === 0) m[x][y] = 1;
-    }
-  }
-};
 
 // 1. Pick middle tile
 // 2. If wall -> regenerate map
@@ -199,6 +90,103 @@ const removeClosedRooms = m => {
 // 5. Place enemies
 // 6. Place the player
 const generateMap = () => {
+  const celluarAutomata = () => {
+    let m = squareArray(MAP_SIZE);
+
+    const numberOfSteps = 10;
+    const birthLimit = 5;
+    const deathLimit = 4; // not more than 8
+    const chanceToStartAlive = 0.49;
+
+    const countNeighbours = (x, y) => {
+      let count = 0;
+      [-1, 0, 1].forEach(i => {
+        [-1, 0, 1].forEach(j => {
+          if (i === 0 && j === 0) return;
+
+          let nx = x + i;
+          let ny = y + j;
+
+          if ((nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) || m[nx][ny]) {
+            count++;
+          }
+        });
+      });
+      return count;
+    };
+
+    // Initialization
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
+        m[x][y] = Math.random() < chanceToStartAlive ? 1 : 0;
+      }
+    }
+
+    // Simulation step
+    for (let step = 0; step < numberOfSteps; step++) {
+      let newMap = squareArray(MAP_SIZE);
+      for (let y = 0; y < MAP_SIZE; y++) {
+        for (let x = 0; x < MAP_SIZE; x++) {
+          let nc = countNeighbours(x, y);
+          if (m[x][y]) {
+            newMap[x][y] = nc < deathLimit ? 0 : 1;
+          } else if (nc > birthLimit) {
+            newMap[x][y] = 1;
+          } else {
+            newMap[x][y] = 0;
+          }
+        }
+      }
+      m = newMap;
+    }
+
+    // Make walls
+    m[0] = Array(MAP_SIZE).fill(1);
+    m[MAP_SIZE - 1] = Array(MAP_SIZE).fill(1);
+    m.forEach(c => {
+      c[0] = 1;
+      c[MAP_SIZE - 1] = 1;
+    });
+
+    return m;
+  };
+
+  const removeClosedRooms = m => {
+    const floodMap = squareArray(MAP_SIZE);
+    const queue = [];
+
+    floodMap[MAP_SIZE / 2][MAP_SIZE / 2] = 1;
+    queue.push({ x: MAP_SIZE / 2, y: MAP_SIZE / 2 });
+
+    const markNeighbours = ({ x, y }) => {
+      [-1, 0, 1].forEach(i => {
+        [-1, 0, 1].forEach(j => {
+          if (i !== 0 && j !== 0) return;
+
+          let nx = x + i;
+          let ny = y + j;
+
+          if (
+            (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE) &&
+            (m[nx][ny] === 0 && floodMap[nx][ny] === 0)
+          ) {
+            floodMap[nx][ny] = 1;
+            queue.push({ x: nx, y: ny });
+          }
+        });
+      });
+    };
+
+    while (queue.length) markNeighbours(queue.shift());
+
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
+        if (m[x][y] === 0 && floodMap[x][y] === 0) m[x][y] = 1;
+      }
+    }
+  };
+
+  // Map generation
   let m = celluarAutomata();
 
   while (m[MAP_SIZE / 2][MAP_SIZE / 2] !== 0) m = celluarAutomata();
@@ -212,7 +200,7 @@ const generateMap = () => {
     for (let x = 1; x < MAP_SIZE; x++) {
       if (m[x][y] === 0) {
         if (!playerPlaced) {
-          window.gameData.player.pos = { x, y };
+          gameData.player.pos = { x, y };
           playerPlaced = true;
         } else {
           floorTiles.push({ x, y });
@@ -223,7 +211,7 @@ const generateMap = () => {
 
   shuffleArray(floorTiles);
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 10; i++) { // Enemy amount has to be less then number of free tiles
     enemies.push({
       sprite: 'e1',
       pos: floorTiles.pop(),
@@ -241,10 +229,8 @@ window.DEBUG_minimap = true;
 function update() {
   const keyState = getKeyState();
 
-  // DEBUG: Remove this
+  // TODO: DEBUG: Remove this
   if (keyState.debug) window.DEBUG = true;
-
-  DEBUG_TIME('update');
 
   const { player, plane } = gameData;
 
@@ -256,7 +242,7 @@ function update() {
 
   // Clear buffer
   gl.fillStyle = 'black';
-  gl.fillRect(0, 0, bufferWidth, bufferHeight);
+  gl.fillRect(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
 
   // TODO: DEBUG: Remove minimap
   minimapGl.fillStyle = 'black';
@@ -320,8 +306,8 @@ function update() {
   const zBuffer = []; // for every vertical line
   const spriteOrder = [];
 
-  for (let x = 0; x < bufferWidth; x++) {
-    const cameraX = ((2 * x) / bufferWidth) - 1;
+  for (let x = 0; x < BUFFER_WIDTH; x++) {
+    const cameraX = ((2 * x) / BUFFER_WIDTH) - 1;
     const rayDirX = player.dir.x + (plane.x * cameraX);
     const rayDirY = player.dir.y + (plane.y * cameraX);
 
@@ -387,16 +373,16 @@ function update() {
     }
 
     // Calculate height of line to draw on screen
-    const lineHeight = (bufferHeight / perpWallDist) | 0;
+    const lineHeight = (BUFFER_HEIGHT / perpWallDist) | 0;
 
     // calculate lowest and highest pixel to fill in current stripe
-    let drawStart = (-lineHeight / 2) + (bufferHeight / 2);
+    let drawStart = (-lineHeight / 2) + (BUFFER_HEIGHT / 2);
     if (drawStart < 0) {
       drawStart = 0;
     }
-    let drawEnd = (lineHeight / 2) + (bufferHeight / 2);
-    if (drawEnd >= bufferHeight) {
-      drawEnd = bufferHeight - 1;
+    let drawEnd = (lineHeight / 2) + (BUFFER_HEIGHT / 2);
+    if (drawEnd >= BUFFER_HEIGHT) {
+      drawEnd = BUFFER_HEIGHT - 1;
     }
 
     drawStart |= 0;
@@ -412,18 +398,18 @@ function update() {
     wallX -= Math.floor(wallX); // This actually has to be floored, this is not int casting
 
     // x coordinate on the texture
-    let texX = (wallX * textureSize) | 0;
-    if (side === 0 && rayDirX > 0) texX = textureSize - texX - 1;
-    if (side === 1 && rayDirY < 0) texX = textureSize - texX - 1;
+    let texX = (wallX * TEXTURE_SIZE) | 0;
+    if (side === 0 && rayDirX > 0) texX = TEXTURE_SIZE - texX - 1;
+    if (side === 1 && rayDirY < 0) texX = TEXTURE_SIZE - texX - 1;
 
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
-    let lightScale = (drawEnd - drawStart) / bufferHeight; // 0 to 1
+    let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT; // 0 to 1
     let lightBumpValue = 0.1; // TODO: REFACTOR THIS
     let shadeFactor = Math.min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
-      let d = ((y * 256) - (bufferHeight * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
-      let texY = (((d * textureSize) / lineHeight) / 256) | 0;
+      let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
+      let texY = (((d * TEXTURE_SIZE) / lineHeight) / 256) | 0;
 
       if (!testWallTexture[texY]) continue;
       let textureShade = (0.5 + (testWallTexture[texY][texX] * 0.5));
@@ -466,7 +452,7 @@ function update() {
     let transformX = invDet * ((player.dir.y * spriteX) - (player.dir.x * spriteY));
     let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
 
-    let spriteScreenX = ((bufferWidth / 2) * (1 + (transformX / transformY))) | 0;
+    let spriteScreenX = ((BUFFER_WIDTH / 2) * (1 + (transformX / transformY))) | 0;
 
     // parameters for scaling and moving the sprites
     const uDiv = 2;
@@ -475,22 +461,22 @@ function update() {
     let vMoveScreen = (vMove / transformY) | 0;
 
     // calculate height of the sprite on screen
-    let spriteHeight = (Math.abs(((bufferHeight / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
+    let spriteHeight = (Math.abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
     // calculate lowest and highest pixel to fill in current stripe
-    let drawStartY = (((-spriteHeight / 2) + (bufferHeight / 2)) | 0) + vMoveScreen;
+    let drawStartY = (((-spriteHeight / 2) + (BUFFER_HEIGHT / 2)) | 0) + vMoveScreen;
     if (drawStartY < 0) drawStartY = 0;
-    let drawEndY = (((spriteHeight / 2) + (bufferHeight / 2)) | 0) + vMoveScreen;
-    if (drawEndY >= bufferHeight) drawEndY = bufferHeight - 1;
+    let drawEndY = (((spriteHeight / 2) + (BUFFER_HEIGHT / 2)) | 0) + vMoveScreen;
+    if (drawEndY >= BUFFER_HEIGHT) drawEndY = BUFFER_HEIGHT - 1;
 
     // calculate width of the sprite
-    let spriteWidth = (Math.abs(((bufferHeight / transformY) | 0)) / uDiv) | 0;
+    let spriteWidth = (Math.abs(((BUFFER_HEIGHT / transformY) | 0)) / uDiv) | 0;
     let drawStartX = ((-spriteWidth / 2) + spriteScreenX) | 0;
     if (drawStartX < 0) drawStartX = 0;
     let drawEndX = ((spriteWidth / 2) + spriteScreenX) | 0;
-    if (drawEndX >= bufferWidth) drawEndX = bufferWidth - 1;
+    if (drawEndX >= BUFFER_WIDTH) drawEndX = BUFFER_WIDTH - 1;
 
     let lightBumpValue = 0.4;
-    let shadeFactor = Math.min((((drawEndY - drawStartY) / bufferHeight) + lightBumpValue), 1);
+    let shadeFactor = Math.min((((drawEndY - drawStartY) / BUFFER_HEIGHT) + lightBumpValue), 1);
 
     let color = colorMul({ r: 255, g: 255, b: 14 }, shadeFactor);
 
@@ -498,17 +484,17 @@ function update() {
 
     // loop through every vertical stripe of the sprite on screen
     for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
-      let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * textureSize) / spriteWidth)) | 0) / 256) | 0;
+      let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * TEXTURE_SIZE) / spriteWidth)) | 0) / 256) | 0;
 
       // the conditions in the if are:
       // 1) it's in front of camera plane so you don't see things behind you
       // 2) it's on the screen (left)
       // 3) it's on the screen (right)
       // 4) ZBuffer, with perpendicular distance
-      if (transformY > 0 && stripe > 0 && stripe < bufferWidth && transformY < zBuffer[stripe]) {
+      if (transformY > 0 && stripe > 0 && stripe < BUFFER_WIDTH && transformY < zBuffer[stripe]) {
         for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
-          let d = (((y - vMoveScreen) * 256) - (bufferHeight * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
-          let texY = (((d * textureSize) / spriteHeight) / 256) | 0;
+          let d = (((y - vMoveScreen) * 256) - (BUFFER_HEIGHT * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
+          let texY = (((d * TEXTURE_SIZE) / spriteHeight) / 256) | 0;
 
           if (!spriteTexture[texY]) continue;
           if (spriteTexture[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
@@ -541,7 +527,7 @@ function update() {
 
   // Rendering end
   // Input processing
-  let forwardVector = vecMul(player.dir, playerMoveSpeed);
+  let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
 
   if (keyState.up) {
     let d = vecAdd(player.pos, forwardVector);
@@ -555,7 +541,7 @@ function update() {
     if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
   }
 
-  let sideVector = vecMul({ x: -1 * player.dir.y, y: player.dir.x }, (playerMoveSpeed * 0.5));
+  let sideVector = vecMul({ x: -1 * player.dir.y, y: player.dir.x }, (PLAYER_MOVE_SPEED * 0.5));
 
   if (keyState.right) {
     let d = vecSub(player.pos, sideVector);
@@ -571,7 +557,7 @@ function update() {
 
   // Rotate the player
   const oldDirX = player.dir.x;
-  let playerRotateAmount = -keyState.rotate * playerRotateSpeed * 0.15;
+  let playerRotateAmount = -keyState.rotate * PLAYER_ROTATE_SPEED * 0.15;
   player.dir.x = (player.dir.x * Math.cos(playerRotateAmount)) - (player.dir.y * Math.sin(playerRotateAmount));
   player.dir.y = (oldDirX * Math.sin(playerRotateAmount)) + (player.dir.y * Math.cos(playerRotateAmount));
   const oldPlaneX = plane.x;
@@ -628,7 +614,6 @@ function update() {
     minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
   }
 
-  DEBUG_TIME_END('update');
   window.DEBUG = false;
 }
 

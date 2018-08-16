@@ -6,9 +6,12 @@ window.engine = {
   scene: gameScene,
 };
 
+engine.gl = engine.c.getContext('2d');
+engine.gl.imageSmoothingEnabled = false;
+engine.c.onclick = () => engine.c.requestPointerLock();
+
 window.gameData = {
   player: {
-    pos: { x: 2, y: 2 },
     dir: { x: -1, y: 0 },
   },
   plane: { x: 0, y: 0.66 },
@@ -24,18 +27,13 @@ minimap.style.position = 'absolute';
 minimap.style.width = '256px';
 minimap.style['image-rendering'] = 'pixelated';
 document.body.insertBefore(minimap, document.body.firstChild);
-window.gameData.minimap = minimap;
+gameData.minimap = minimap;
 
-window.gameData.map = gameScene.generateMap();
-
-window.engine.c.onclick = () => window.engine.c.requestPointerLock();
-
-engine.gl = engine.c.getContext('2d');
-engine.gl.imageSmoothingEnabled = false;
+// Generate map
+gameData.map = gameScene.generateMap();
 
 function run() {
   engine.scene.update();
-
   window.requestAnimationFrame(run);
 }
 
@@ -55,3 +53,4 @@ if (module.hot) {
 // TODO: Make all consts - lets
 // TODO: Remove all DEBUG stuff
 // TODO: Find more vector operations to replace with vec* functions
+// TODO: Replace true with 1, false with 0
