@@ -238,9 +238,9 @@ gainNode.connect(audioContext.destination);
 oscNode.start(); // start now
 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
 
-const soundShoot = () => {
+const soundShoot = volume => {
   oscNode.frequency.value = randomInt(90, 92);
-  gainNode.gain.setValueAtTime(0.75, audioContext.currentTime);
+  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
   gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
 };
 
@@ -592,7 +592,7 @@ function update() {
       lifetime: BULLET_LIFETIME_FRAMES,
     });
     shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
-    soundShoot();
+    soundShoot(0.75);
   }
 
   if (keyState.debugSpawnEnemy && debugSpawnFrameTimeout <= 0) {
