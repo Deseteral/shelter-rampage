@@ -18,18 +18,26 @@ const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
 const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
 const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
 const vecNorm = (a) => vecDiv(a, vecLen(a));
+const vecRotate = (a, rad) => {
+  let cs = Math.cos(rad);
+  let sn = Math.sin(rad);
+  return {
+    x: (a.x * cs) - (a.y * sn),
+    y: (a.x * sn) + (a.y * cs),
+  };
+};
 const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
 
-const randomFloat = (min, max) => ((Math.random() * ((max - min) + 1)) + min);
+const randomFloat = (min, max) => ((Math.random() * (max - min)) + min);
 const randomInt = (min, max) => {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * ((max - min) + 1)) + min;
 };
-const randomDir = () => vecNorm({ x: 1 - randomFloat(0, 2), y: 1 - randomFloat(0, 2) });
+const randomDir = () => vecNorm({ x: randomFloat(-1, 1), y: randomFloat(-1, 1) });
 
 const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
 const canEnemySeePlayer = (enemy, player) => {
@@ -310,7 +318,8 @@ function update() {
         if (distanceEnemyToPlayer <= 3) e.dir = { x: 0, y: 0 };
 
         if (e.shootingFrameTimeout <= 0) {
-          shootBullet(e.pos, dirToPlayer, false);
+          let bulletDir = vecRotate(dirToPlayer, randomFloat(-0.2, 0.2));
+          shootBullet(e.pos, bulletDir, false);
           e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
           soundShoot(1 / Math.max(distanceEnemyToPlayer, 1));
         }
@@ -555,8 +564,8 @@ function update() {
 
   // Render offscreen buffer
   const playerIsShooting = keyState.shoot && shootingFrameTimeout <= 0;
-  const shakeX = playerIsShooting ? (2 - randomInt(0, 4)) : 0;
-  const shakeY = playerIsShooting ? (2 - randomInt(0, 4)) : 0;
+  const shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
+  const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
   engine.gl.drawImage(offscreen, shakeX, shakeY, 360, 400);
 
