@@ -50,3 +50,4 @@ if (module.hot) {
 // TODO: Remove all DEBUG stuff
 // TODO: Find more vector operations to replace with vec* functions
 // TODO: Replace true with 1, false with 0
+// TODO: Replace <= with < etc.

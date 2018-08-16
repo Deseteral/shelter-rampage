@@ -23,7 +23,7 @@ const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
 
-const randomFloat = (min, max) => Math.random() * ((max - min) + 1) + min;
+const randomFloat = (min, max) => ((Math.random() * ((max - min) + 1)) + min);
 const randomInt = (min, max) => {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -33,7 +33,7 @@ const randomDir = () => vecNorm({ x: 1 - randomFloat(0, 2), y: 1 - randomFloat(0
 
 const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
 const canEnemySeePlayer = (enemy, player) => {
-  if (pointsDistance(enemy.pos, player.pos) > 5) return false;
+  if (pointsDistance(enemy.pos, player.pos) > 10) return false;
 
   let dirVec = dirVecPoints(enemy.pos, player.pos);
   let castPos = { ...enemy.pos };
@@ -63,10 +63,21 @@ const PLAYER_ROTATE_SPEED = 0.03;
 const BULLET_SPEED = 0.5;
 const BULLET_LIFETIME_FRAMES = 60 * 3;
 const SHOOTING_FRAME_TIMEOUT_MAX = 7;
+const SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
 let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
 
 let enemies = [];
 let bullets = [];
+
+const shootBullet = (pos, dir, ownerPlayer) => {
+  bullets.push({
+    sprite: 'b',
+    pos: { ...pos },
+    dir: { ...dir },
+    lifetime: BULLET_LIFETIME_FRAMES,
+    ownerPlayer,
+  });
+};
 
 // TODO: DEBUG: Remove
 const DEBUG_SPAWN_TIMEOUT_MAX = 60;
@@ -218,6 +229,7 @@ const generateMap = () => {
       dir: randomDir(),
       changeDirTimer: enemyDirTimer(),
       life: 100,
+      shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
     });
   }
 
@@ -270,7 +282,8 @@ function update() {
 
   // Update world
   enemies.forEach(e => {
-    e.hit = false;
+    e.hit = false; // Reset
+    e.shootingFrameTimeout--;
 
     e.changeDirTimer--;
     if (e.changeDirTimer <= 0) {
@@ -288,8 +301,23 @@ function update() {
       // if (pointsDistance(dp, player.pos) <= 0.5) canMove = false; // TODO: What if enemy hits the player
     });
 
-    if (canEnemySeePlayer(e, player)) e.dir = dirVecPoints(e.pos, player.pos);
+    if (canEnemySeePlayer(e, player)) {
+      let dirToPlayer = dirVecPoints(e.pos, player.pos);
+      e.dir = dirToPlayer;
 
+      if (e.sprite === 'e1') {
+        let distanceEnemyToPlayer = pointsDistance(player.pos, e.pos);
+        if (distanceEnemyToPlayer <= 3) e.dir = { x: 0, y: 0 };
+
+        if (e.shootingFrameTimeout <= 0) {
+          shootBullet(e.pos, dirToPlayer, false);
+          e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
+          soundShoot(1 / Math.max(distanceEnemyToPlayer, 1));
+        }
+      }
+    }
+
+    // Apply calculated movement
     e.pos = vecAdd(e.pos, vecDiv(e.dir, 50));
   });
 
@@ -304,7 +332,7 @@ function update() {
 
     enemies.forEach(e => {
       // Bullet hits enemy
-      if (pointsDistance(b.pos, e.pos) < 0.5) {
+      if (b.ownerPlayer && pointsDistance(b.pos, e.pos) < 0.5) {
         e.life -= 15;
         e.hit = true;
 
@@ -587,12 +615,7 @@ function update() {
   plane.y = (oldPlaneX * Math.sin(playerRotateAmount)) + (plane.y * Math.cos(playerRotateAmount));
 
   if (playerIsShooting) {
-    bullets.push({
-      sprite: 'b',
-      pos: { ...player.pos },
-      dir: { ...player.dir },
-      lifetime: BULLET_LIFETIME_FRAMES,
-    });
+    shootBullet(player.pos, player.dir, true);
     shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
     soundShoot(0.75);
   }
