@@ -1,5 +1,7 @@
 import getKeyState from '../engine/keyboard';
 
+const audioContext = new AudioContext();
+
 const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -244,24 +246,19 @@ const generateMap = () => {
   return m;
 };
 
-const audioContext = new AudioContext();
-const gainNode = audioContext.createGain();
-// create a oscillator audio node
-const oscNode = audioContext.createOscillator();
-oscNode.type = 'triangle'; // sine, square, sawtooth, triangle
-// set a value in an AudioParam
-oscNode.frequency.value = 90;
-// be sure to connect the osc node to destination before starting it
-// oscNode.connect(audioContext.destination);
-oscNode.connect(gainNode);
-gainNode.connect(audioContext.destination);
-oscNode.start(); // start now
-gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-
 const soundShoot = volume => {
-  oscNode.frequency.value = randomInt(90, 92);
+  const oscillatorNode = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillatorNode.type = 'triangle';
+  oscillatorNode.frequency.value = randomInt(90, 92);
+
+  oscillatorNode.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
   gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-  gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
+  gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.015);
+  oscillatorNode.start();
 };
 
 window.DEBUG_minimap = true;
