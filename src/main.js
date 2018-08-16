@@ -12,9 +12,9 @@ engine.c.onclick = () => engine.c.requestPointerLock();
 
 window.gameData = {
   player: {
-    dir: { x: -1, y: 0 },
+    dir: { x: 0.61, y: 0.79 },
   },
-  plane: { x: 0, y: 0.66 },
+  plane: { x: 0.52, y: -0.40 },
   map: null,
 };
 

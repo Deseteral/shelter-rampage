@@ -200,7 +200,7 @@ const generateMap = () => {
     for (let x = 1; x < MAP_SIZE; x++) {
       if (m[x][y] === 0) {
         if (!playerPlaced) {
-          gameData.player.pos = { x, y };
+          gameData.player.pos = { x: x + 0.1, y: y + 0.1 };
           playerPlaced = true;
         } else {
           floorTiles.push({ x, y });
