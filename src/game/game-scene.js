@@ -10,6 +10,14 @@ function DEBUG_TIME_END(name) {
   if (window.DEBUG) console.timeEnd(name);
 }
 
+const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+};
+
 const checkMapCollision = (x, y) => gameData.map[x | 0][y | 0] === 0;
 const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
 
@@ -80,15 +88,6 @@ const SPRITE_TEX = {
 let enemies = [];
 
 const MAP_SIZE = 32;
-for (let i = 0; i < 10; i++) {
-  enemies.push({
-    sprite: 'e1',
-    pos: { x: randomInt(1, MAP_SIZE - 1), y: randomInt(1, MAP_SIZE) },
-    dir: randomDir(),
-    changeDirTimer: enemyDirTimer(),
-    life: 100,
-  });
-}
 
 let bullets = [];
 
@@ -97,9 +96,8 @@ offscreen.width = bufferWidth;
 offscreen.height = bufferHeight;
 const gl = offscreen.getContext('2d');
 
-const generateMap = () => {
-  const newArray = () => Array(MAP_SIZE).fill([]).map(() => Array(MAP_SIZE).fill(0));
-  let m = newArray();
+const celluarAutomata = () => {
+  let m = squareArray(MAP_SIZE);
 
   const numberOfSteps = 10;
   const birthLimit = 5;
@@ -132,7 +130,7 @@ const generateMap = () => {
 
   // Simulation step
   for (let step = 0; step < numberOfSteps; step++) {
-    let newMap = newArray();
+    let newMap = squareArray(MAP_SIZE);
     for (let y = 0; y < MAP_SIZE; y++) {
       for (let x = 0; x < MAP_SIZE; x++) {
         let nc = countNeighbours(x, y);
@@ -156,12 +154,84 @@ const generateMap = () => {
     c[MAP_SIZE - 1] = 1;
   });
 
-  // 1. Pick middle tile
-  // 2. If wall -> regenerate map
-  // 3. Make flood fill
-  // 4. If tile was not marked as active -> set to wall
-  // 5. Place enemies
-  // 6. Place the player
+  return m;
+};
+
+const removeClosedRooms = m => {
+  const floodMap = squareArray(MAP_SIZE);
+  const queue = [];
+
+  floodMap[MAP_SIZE / 2][MAP_SIZE / 2] = 1;
+  queue.push({ x: MAP_SIZE / 2, y: MAP_SIZE / 2 });
+
+  const markNeighbours = ({ x, y }) => {
+    [-1, 0, 1].forEach(i => {
+      [-1, 0, 1].forEach(j => {
+        if (i !== 0 && j !== 0) return;
+
+        let nx = x + i;
+        let ny = y + j;
+
+        if (
+          (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE) &&
+          (m[nx][ny] === 0 && floodMap[nx][ny] === 0)
+        ) {
+          floodMap[nx][ny] = 1;
+          queue.push({ x: nx, y: ny });
+        }
+      });
+    });
+  };
+
+  while (queue.length) markNeighbours(queue.shift());
+
+  for (let y = 0; y < MAP_SIZE; y++) {
+    for (let x = 0; x < MAP_SIZE; x++) {
+      if (m[x][y] === 0 && floodMap[x][y] === 0) m[x][y] = 1;
+    }
+  }
+};
+
+// 1. Pick middle tile
+// 2. If wall -> regenerate map
+// 3. Make flood fill
+// 4. If tile was not marked as active -> set to wall
+// 5. Place enemies
+// 6. Place the player
+const generateMap = () => {
+  let m = celluarAutomata();
+
+  while (m[MAP_SIZE / 2][MAP_SIZE / 2] !== 0) m = celluarAutomata();
+
+  removeClosedRooms(m);
+
+  let floorTiles = [];
+  let playerPlaced = false;
+
+  for (let y = 1; y < MAP_SIZE; y++) {
+    for (let x = 1; x < MAP_SIZE; x++) {
+      if (m[x][y] === 0) {
+        if (!playerPlaced) {
+          window.gameData.player.pos = { x, y };
+          playerPlaced = true;
+        } else {
+          floorTiles.push({ x, y });
+        }
+      }
+    }
+  }
+
+  shuffleArray(floorTiles);
+
+  for (let i = 0; i < 10; i++) {
+    enemies.push({
+      sprite: 'e1',
+      pos: floorTiles.pop(),
+      dir: randomDir(),
+      changeDirTimer: enemyDirTimer(),
+      life: 100,
+    });
+  }
 
   return m;
 };

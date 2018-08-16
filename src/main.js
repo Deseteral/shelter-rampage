@@ -12,11 +12,8 @@ window.gameData = {
     dir: { x: -1, y: 0 },
   },
   plane: { x: 0, y: 0.66 },
-  map: gameScene.generateMap(),
+  map: null,
 };
-
-// TODO: DEBUG: Map overview log
-console.log(window.gameData.map.map(a => a.map(s => (s ? '#' : ' ')).join('')).join('\n'));
 
 // TODO: DEBUG: Remove minimap
 const minimap = document.createElement('canvas');
@@ -28,6 +25,8 @@ minimap.style.width = '256px';
 minimap.style['image-rendering'] = 'pixelated';
 document.body.insertBefore(minimap, document.body.firstChild);
 window.gameData.minimap = minimap;
+
+window.gameData.map = gameScene.generateMap();
 
 window.engine.c.onclick = () => window.engine.c.requestPointerLock();
 
