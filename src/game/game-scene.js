@@ -315,6 +315,8 @@ function update() {
           if (pointsDistance(dp, ee.pos) <= 0.5) canRecoil = false;
         });
 
+        if (!checkMapCollision(dp.x, dp.y)) canRecoil = false;
+
         if (canRecoil) e.pos = dp;
 
         b.lifetime = 0;
