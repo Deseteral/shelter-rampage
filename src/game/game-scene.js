@@ -37,8 +37,8 @@ const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
 
-const randomFloat = (min, max) => ((random() * (max - min)) + min);
-const randomInt = (min, max) => {
+const randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
+const randomInt = (min, max) => { // eslint-disable-line no-shadow
   min = ceil(min);
   max = floor(max);
   return floor(random() * ((max - min) + 1)) + min;
