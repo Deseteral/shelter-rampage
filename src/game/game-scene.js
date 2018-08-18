@@ -303,7 +303,6 @@ function update() {
     enemies.forEach(ee => {
       if (ee === e) return;
       if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
-      // if (pointsDistance(dp, player.pos) <= 0.5) canMove = false; // TODO: What if enemy hits the player
     });
 
     if (canEnemySeePlayer(e, player)) {
@@ -626,6 +625,7 @@ function update() {
     soundShoot(0.75);
   }
 
+  // TODO: DEBUG: Remove spawning test enemies
   if (keyState.debugSpawnEnemy && debugSpawnFrameTimeout <= 0) {
     enemies.push({
       sprite: 'e1',

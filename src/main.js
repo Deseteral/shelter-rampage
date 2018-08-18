@@ -51,3 +51,4 @@ if (module.hot) {
 // TODO: Find more vector operations to replace with vec* functions
 // TODO: Replace true with 1, false with 0
 // TODO: Replace <= with < etc.
+// TODO: Alias all Math.* things
