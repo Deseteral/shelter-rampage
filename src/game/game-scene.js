@@ -2,10 +2,14 @@ import getKeyState from '../engine/keyboard';
 
 const audioContext = new AudioContext();
 
+const {
+  sin, cos, floor, random, sqrt, ceil, min, max, abs,
+} = Math;
+
 const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = floor(random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -13,16 +17,16 @@ const shuffleArray = (array) => {
 const checkMapCollision = (x, y) => gameData.map[x | 0][y | 0] === 0;
 const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
 
-const pointsDistance = (a, b) => Math.sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
+const pointsDistance = (a, b) => sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
 const vecAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
 const vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
 const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
 const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
-const vecLen = (a) => Math.sqrt((a.x ** 2) + (a.y ** 2));
+const vecLen = (a) => sqrt((a.x ** 2) + (a.y ** 2));
 const vecNorm = (a) => vecDiv(a, vecLen(a));
 const vecRotate = (a, rad) => {
-  let cs = Math.cos(rad);
-  let sn = Math.sin(rad);
+  let cs = cos(rad);
+  let sn = sin(rad);
   return {
     x: (a.x * cs) - (a.y * sn),
     y: (a.x * sn) + (a.y * cs),
@@ -33,11 +37,11 @@ const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
 const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
 
-const randomFloat = (min, max) => ((Math.random() * (max - min)) + min);
+const randomFloat = (min, max) => ((random() * (max - min)) + min);
 const randomInt = (min, max) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * ((max - min) + 1)) + min;
+  min = ceil(min);
+  max = floor(max);
+  return floor(random() * ((max - min) + 1)) + min;
 };
 const randomDir = () => vecNorm({ x: randomFloat(-1, 1), y: randomFloat(-1, 1) });
 
@@ -139,7 +143,7 @@ const generateMap = () => {
     // Initialization
     for (let y = 0; y < MAP_SIZE; y++) {
       for (let x = 0; x < MAP_SIZE; x++) {
-        m[x][y] = Math.random() < chanceToStartAlive ? 1 : 0;
+        m[x][y] = random() < chanceToStartAlive ? 1 : 0;
       }
     }
 
@@ -317,7 +321,7 @@ function update() {
           let bulletDir = vecRotate(dirToPlayer, randomFloat(-0.2, 0.2));
           shootBullet(e.pos, bulletDir, false);
           e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
-          soundShoot(1 / Math.max(distanceEnemyToPlayer, 1));
+          soundShoot(1 / max(distanceEnemyToPlayer, 1));
         }
       }
     }
@@ -374,8 +378,8 @@ function update() {
     let sideDistY;
 
     // length of ray from one x or y-side to next x or y-side
-    const deltaDistX = Math.abs(1 / rayDirX);
-    const deltaDistY = Math.abs(1 / rayDirY);
+    const deltaDistX = abs(1 / rayDirX);
+    const deltaDistY = abs(1 / rayDirY);
     let perpWallDist;
 
     // what direction to step in x or y-direction (either +1 or -1)
@@ -450,7 +454,7 @@ function update() {
     } else {
       wallX = player.pos.x + (perpWallDist * rayDirX);
     }
-    wallX -= Math.floor(wallX); // This actually has to be floored, this is not int casting
+    wallX -= floor(wallX); // This actually has to be floored, this is not int casting
 
     // x coordinate on the texture
     let texX = (wallX * TEXTURE_SIZE) | 0;
@@ -460,7 +464,7 @@ function update() {
     // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
     let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT; // 0 to 1
     let lightBumpValue = 0.1; // TODO: REFACTOR THIS
-    let shadeFactor = Math.min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
+    let shadeFactor = min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
 
     for (let y = drawStart; y < drawEnd; y++) {
       let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
@@ -516,7 +520,7 @@ function update() {
     let vMoveScreen = (vMove / transformY) | 0;
 
     // calculate height of the sprite on screen
-    let spriteHeight = (Math.abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
+    let spriteHeight = (abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
     // calculate lowest and highest pixel to fill in current stripe
     let drawStartY = (((-spriteHeight / 2) + (BUFFER_HEIGHT / 2)) | 0) + vMoveScreen;
     if (drawStartY < 0) drawStartY = 0;
@@ -524,14 +528,14 @@ function update() {
     if (drawEndY >= BUFFER_HEIGHT) drawEndY = BUFFER_HEIGHT - 1;
 
     // calculate width of the sprite
-    let spriteWidth = (Math.abs(((BUFFER_HEIGHT / transformY) | 0)) / uDiv) | 0;
+    let spriteWidth = (abs(((BUFFER_HEIGHT / transformY) | 0)) / uDiv) | 0;
     let drawStartX = ((-spriteWidth / 2) + spriteScreenX) | 0;
     if (drawStartX < 0) drawStartX = 0;
     let drawEndX = ((spriteWidth / 2) + spriteScreenX) | 0;
     if (drawEndX >= BUFFER_WIDTH) drawEndX = BUFFER_WIDTH - 1;
 
     let lightBumpValue = 0.4;
-    let shadeFactor = Math.min((((drawEndY - drawStartY) / BUFFER_HEIGHT) + lightBumpValue), 1);
+    let shadeFactor = min((((drawEndY - drawStartY) / BUFFER_HEIGHT) + lightBumpValue), 1);
 
     let color = colorMul({ r: 255, g: 255, b: 14 }, shadeFactor);
 
@@ -613,11 +617,11 @@ function update() {
   // Rotate the player
   const oldDirX = player.dir.x;
   let playerRotateAmount = -keyState.rotate * PLAYER_ROTATE_SPEED * 0.15;
-  player.dir.x = (player.dir.x * Math.cos(playerRotateAmount)) - (player.dir.y * Math.sin(playerRotateAmount));
-  player.dir.y = (oldDirX * Math.sin(playerRotateAmount)) + (player.dir.y * Math.cos(playerRotateAmount));
+  player.dir.x = (player.dir.x * cos(playerRotateAmount)) - (player.dir.y * sin(playerRotateAmount));
+  player.dir.y = (oldDirX * sin(playerRotateAmount)) + (player.dir.y * cos(playerRotateAmount));
   const oldPlaneX = plane.x;
-  plane.x = (plane.x * Math.cos(playerRotateAmount)) - (plane.y * Math.sin(playerRotateAmount));
-  plane.y = (oldPlaneX * Math.sin(playerRotateAmount)) + (plane.y * Math.cos(playerRotateAmount));
+  plane.x = (plane.x * cos(playerRotateAmount)) - (plane.y * sin(playerRotateAmount));
+  plane.y = (oldPlaneX * sin(playerRotateAmount)) + (plane.y * cos(playerRotateAmount));
 
   if (playerIsShooting) {
     shootBullet(player.pos, player.dir, true);
