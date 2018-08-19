@@ -4,6 +4,7 @@
 // TODO: Replace true with 1, false with 0
 // TODO: Replace <= with < etc.
 // TODO: Replace empty arrow fn arg () with _     `() =>` to `_ =>`
+// TODO: Fix license and all that
 
 (() => {
   // Constant values
@@ -338,7 +339,6 @@
       });
     });
 
-    // TODO: Alias this kind of for loop (do something x times)
     repeat(10, () => {
       enemies.push({
         sprite: 'e2',
