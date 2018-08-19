@@ -19,6 +19,7 @@
 
   const PLAYER_MOVE_SPEED = 0.1;
   const PLAYER_ROTATE_SPEED = 0.03;
+  const PLAYER_INVISIBILITY_TIMEOUT_MAX = 2 * 60; // TODO: Precalculate that
 
   const E1_MOVE_SPEED = 0.02; // e1 is shooting enemy
   const E2_MOVE_SPEED = 0.12; // e2 is melee enemy
@@ -101,6 +102,7 @@
 
   // Game objects
   let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
+  let invisibilityTimeout = PLAYER_INVISIBILITY_TIMEOUT_MAX;
 
   let level = null;
   let enemies = [];
@@ -154,7 +156,7 @@
 
   const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
   const canEnemySeePlayer = (enemy) => {
-    if (pointsDistance(enemy.pos, player.pos) > 10) return false;
+    if (invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10) return false;
 
     let dirVec = dirVecPoints(enemy.pos, player.pos);
     let castPos = { ...enemy.pos };
@@ -328,10 +330,16 @@
 
     shuffleArray(floorTiles);
 
+    const getPos = () => {
+      let pos = floorTiles.pop();
+      while (pointsDistance(pos, player.pos) <= 15) pos = floorTiles.pop();
+      return pos;
+    };
+
     repeat(10, () => { // Enemy amount has to be less then number of free tiles
       enemies.push({
         sprite: 'e1',
-        pos: floorTiles.pop(),
+        pos: getPos(),
         dir: randomDir(),
         changeDirTimer: enemyDirTimer(),
         life: 100,
@@ -342,7 +350,7 @@
     repeat(10, () => {
       enemies.push({
         sprite: 'e2',
-        pos: floorTiles.pop(),
+        pos: getPos(),
         dir: randomDir(),
         changeDirTimer: enemyDirTimer(),
         life: 50,
@@ -748,6 +756,7 @@
     // Process frame timers
     // TODO: Perhaps I should move this between update and render
     shootingFrameTimeout--;
+    invisibilityTimeout--;
 
     bullets = bullets
       .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
