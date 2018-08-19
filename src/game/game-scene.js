@@ -74,6 +74,11 @@ const MAP_SIZE = 32;
 const PLAYER_MOVE_SPEED = 0.1;
 const PLAYER_ROTATE_SPEED = 0.03;
 
+// e1 is shooting enemy
+// e2 is melee enemy
+const E1_MOVE_SPEED = 0.02;
+const E2_MOVE_SPEED = 0.12;
+
 const BULLET_SPEED = 0.5;
 const BULLET_LIFETIME_FRAMES = 60 * 3;
 const SHOOTING_FRAME_TIMEOUT_MAX = 7;
@@ -100,6 +105,7 @@ let debugSpawnFrameTimeout = DEBUG_SPAWN_TIMEOUT_MAX;
 const testWallTexture = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
 const SPRITE_TEX = {
   e1: textureUnpack('0000000000011000001111000010010000111100010010100101101010010101'),
+  e2: textureUnpack('0000000000000000001001000111111000011000001111000000000000000000'),
   b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
 };
 
@@ -247,6 +253,18 @@ const generateMap = () => {
     });
   }
 
+  // TODO: Alias this kind of for loop (do something x times)
+  for (let i = 0; i < 10; i++) {
+    enemies.push({
+      sprite: 'e2',
+      pos: floorTiles.pop(),
+      dir: randomDir(),
+      changeDirTimer: enemyDirTimer(),
+      life: 50,
+      shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
+    });
+  }
+
   return m;
 };
 
@@ -300,10 +318,6 @@ function update() {
       e.changeDirTimer = enemyDirTimer();
     }
 
-    if (!checkMapCollision(e.pos.x, e.pos.y)) {
-      e.dir = vecMul(e.dir, -1);
-    }
-
     enemies.forEach(ee => {
       if (ee === e) return;
       if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
@@ -315,7 +329,9 @@ function update() {
 
       if (e.sprite === 'e1') {
         let distanceEnemyToPlayer = pointsDistance(player.pos, e.pos);
-        if (distanceEnemyToPlayer <= 3) e.dir = { x: 0, y: 0 };
+        if (distanceEnemyToPlayer <= 3) {
+          e.dir = vecMul(vecNorm(dirVecPoints(e.pos, player.pos)), -3);
+        }
 
         if (e.shootingFrameTimeout <= 0) {
           let bulletDir = vecRotate(dirToPlayer, randomFloat(-0.2, 0.2));
@@ -324,10 +340,22 @@ function update() {
           soundShoot(1 / max(distanceEnemyToPlayer, 1));
         }
       }
+
+      // Enemy touches player
+      if (pointsDistance(e.pos, player.pos) <= 0.5) {
+        e.life = 0;
+      }
     }
 
     // Apply calculated movement
-    e.pos = vecAdd(e.pos, vecDiv(e.dir, 50));
+    let makeDp = () => vecAdd(e.pos, vecMul(e.dir, e.sprite === 'e1' ? E1_MOVE_SPEED : E2_MOVE_SPEED));
+    let dp = makeDp();
+    if (checkMapCollision(dp.x, dp.y)) {
+      e.pos = dp;
+    } else {
+      e.dir = vecMul(e.dir, -1);
+      e.pos = makeDp();
+    }
   });
 
   bullets.forEach(b => {
