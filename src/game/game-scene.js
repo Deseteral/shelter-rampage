@@ -6,6 +6,10 @@ const {
   sin, cos, floor, random, sqrt, ceil, min, max, abs,
 } = Math;
 
+const repeat = (times, cb, start = 0) => {
+  for (let i = start; i < times; i++) cb(i);
+};
+
 const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -147,17 +151,17 @@ const generateMap = () => {
     };
 
     // Initialization
-    for (let y = 0; y < MAP_SIZE; y++) {
-      for (let x = 0; x < MAP_SIZE; x++) {
+    repeat(MAP_SIZE, (y) => {
+      repeat(MAP_SIZE, (x) => {
         m[x][y] = random() < chanceToStartAlive ? 1 : 0;
-      }
-    }
+      });
+    });
 
     // Simulation step
-    for (let step = 0; step < numberOfSteps; step++) {
+    repeat(numberOfSteps, () => {
       let newMap = squareArray(MAP_SIZE);
-      for (let y = 0; y < MAP_SIZE; y++) {
-        for (let x = 0; x < MAP_SIZE; x++) {
+      repeat(MAP_SIZE, (y) => {
+        repeat(MAP_SIZE, (x) => {
           let nc = countNeighbours(x, y);
           if (m[x][y]) {
             newMap[x][y] = nc < deathLimit ? 0 : 1;
@@ -166,10 +170,10 @@ const generateMap = () => {
           } else {
             newMap[x][y] = 0;
           }
-        }
-      }
+        });
+      });
       m = newMap;
-    }
+    });
 
     // Make walls
     m[0] = Array(MAP_SIZE).fill(1);
@@ -210,11 +214,11 @@ const generateMap = () => {
 
     while (queue.length) markNeighbours(queue.shift());
 
-    for (let y = 0; y < MAP_SIZE; y++) {
-      for (let x = 0; x < MAP_SIZE; x++) {
+    repeat(MAP_SIZE, (y) => {
+      repeat(MAP_SIZE, (x) => {
         if (m[x][y] === 0 && floodMap[x][y] === 0) m[x][y] = 1;
-      }
-    }
+      });
+    });
   };
 
   // Map generation
@@ -227,8 +231,8 @@ const generateMap = () => {
   let floorTiles = [];
   let playerPlaced = false;
 
-  for (let y = 1; y < MAP_SIZE; y++) {
-    for (let x = 1; x < MAP_SIZE; x++) {
+  repeat(MAP_SIZE, (y) => {
+    repeat(MAP_SIZE, (x) => {
       if (m[x][y] === 0) {
         if (!playerPlaced) {
           gameData.player.pos = { x: x + 0.1, y: y + 0.1 };
@@ -237,12 +241,12 @@ const generateMap = () => {
           floorTiles.push({ x, y });
         }
       }
-    }
-  }
+    }, 1);
+  }, 1);
 
   shuffleArray(floorTiles);
 
-  for (let i = 0; i < 10; i++) { // Enemy amount has to be less then number of free tiles
+  repeat(10, () => { // Enemy amount has to be less then number of free tiles
     enemies.push({
       sprite: 'e1',
       pos: floorTiles.pop(),
@@ -251,10 +255,10 @@ const generateMap = () => {
       life: 100,
       shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
     });
-  }
+  });
 
   // TODO: Alias this kind of for loop (do something x times)
-  for (let i = 0; i < 10; i++) {
+  repeat(10, () => {
     enemies.push({
       sprite: 'e2',
       pos: floorTiles.pop(),
@@ -263,7 +267,7 @@ const generateMap = () => {
       life: 50,
       shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
     });
-  }
+  });
 
   return m;
 };
