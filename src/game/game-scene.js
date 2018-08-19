@@ -56,7 +56,7 @@ const canEnemySeePlayer = (enemy, player) => {
   let dirVec = dirVecPoints(enemy.pos, player.pos);
   let castPos = { ...enemy.pos };
   let hit = false;
-  while (true) {
+  while (true) { // eslint-disable-line no-constant-condition
     if (pointsDistance(castPos, player.pos) <= 0.5) {
       hit = true;
       break;
