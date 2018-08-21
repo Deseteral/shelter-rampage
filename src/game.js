@@ -60,6 +60,7 @@
     right: false,
     shoot: false,
     debug: false,
+    anyKey: false,
     rotate: 0,
   };
 
@@ -78,6 +79,7 @@
 
   document.addEventListener('keydown', e => {
     keyState[KEY_CODES[e.keyCode]] = true;
+    keyState.anyKey = true;
   });
 
   document.addEventListener('keyup', e => {
@@ -375,27 +377,42 @@
   //   gameData.minimap = minimap;
   // }
 
-  // Generate map
-  level = generateLevel();
-
   let run = () => {
+    if (keyState.debug) window.DEBUG = true; // TODO: DEBUG: Remove debug
+
     currentScene();
+
+    if (window.DEBUG) { // TODO: DEBUG: Remove color counting
+      const dict = {};
+      const pixels = mainGl.getImageData(0, 0, 360, 400).data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
+        if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
+        dict[key] = true;
+      }
+
+      let colorCount = Object.keys(dict).length;
+      let logLevel = colorCount > 32 ? 'error' : 'log';
+      console[logLevel](`Distinct colors in frame: ${colorCount}`);
+    }
+
+    keyState.anyKey = false;
+    keyState.rotate = 0;
+
+    window.DEBUG = false; // TODO: DEBUG: Remove debug
+
     window.requestAnimationFrame(run); // TODO: Could I get rid of window. ?
   };
 
-
   // Game scene
   let gameScene = () => {
-    // TODO: DEBUG: Remove this
-    if (keyState.debug) window.DEBUG = true;
-
     // TODO: DEBUG: Remove minimap
     // const { minimap } = gameData;
     // const minimapGl = minimap.getContext('2d');
     // minimapGl.imageSmoothingEnabled = false;
     // minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
 
-    // Clear buffer
+    // Clear offscreen buffer
     gl.fillStyle = 'black';
     gl.fillRect(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
 
@@ -693,21 +710,6 @@
 
     mainGl.drawImage(offscreen, shakeX, shakeY, 360, 400);
 
-    // TODO: DEBUG: Remove this
-    if (window.DEBUG) {
-      const dict = {};
-      const pixels = mainGl.getImageData(0, 0, 360, 400).data;
-      for (let i = 0; i < pixels.length; i += 4) {
-        const key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
-        if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
-        dict[key] = true;
-      }
-
-      let colorCount = Object.keys(dict).length;
-      let logLevel = colorCount > 32 ? 'error' : 'log';
-      console[logLevel](`Distinct colors in frame: ${colorCount}`);
-    }
-
     // Rendering end
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
@@ -764,7 +766,9 @@
 
     enemies = enemies.filter(e => e.life > 0);
 
-    keyState.rotate = 0;
+    if (enemies.length <= 0) {
+      currentScene = lobbyScene;
+    }
 
     // TODO: DEBUG: Remove minimap
     // Draw minimap
@@ -780,11 +784,29 @@
     //   minimapGl.fillStyle = 'red';
     //   minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
     // }
-
-    window.DEBUG = false; // TODO: DEBUG: Remove debug
   };
   // END Game scene
 
-  currentScene = gameScene;
+  let gameInitialized = false;
+
+  // Lobby scene
+  let lobbyScene = () => {
+    // Game initialization
+    if (!gameInitialized) {
+      player = { ...DEFAULT_PLAYER };
+      plane = { ...DEFAULT_PLANE };
+      level = generateLevel();
+
+      gameInitialized = true;
+    }
+
+    if (keyState.anyKey) {
+      gameInitialized = false;
+      currentScene = gameScene;
+    }
+  };
+  // END Lobby scene
+
+  currentScene = lobbyScene;
   run(); // TODO: Put this at the very end
 })();
