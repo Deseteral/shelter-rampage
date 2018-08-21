@@ -34,6 +34,8 @@
     dir: { x: 0.61, y: 0.79 },
   };
 
+  const LOBBY_TIMEOUT_MAX = 60 * 2; // TODO: Precalculate that
+
   const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
   const WALL_TEXTURE = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
   const SPRITE_TEX = {
@@ -105,6 +107,9 @@
   // Game objects
   let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
   let invisibilityTimeout = PLAYER_INVISIBILITY_TIMEOUT_MAX;
+
+  let gameInitialized = false;
+  let lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
   let level = null;
   let enemies = [];
@@ -787,8 +792,6 @@
   };
   // END Game scene
 
-  let gameInitialized = false;
-
   // Lobby scene
   let lobbyScene = () => {
     // Game initialization
@@ -800,10 +803,18 @@
       gameInitialized = true;
     }
 
-    if (keyState.anyKey) {
-      gameInitialized = false;
-      currentScene = gameScene;
+    if (lobbyTimeout <= 0) {
+      console.log('Press any key');
+
+      if (keyState.anyKey) {
+        gameInitialized = false;
+        lobbyTimeout = LOBBY_TIMEOUT_MAX;
+
+        currentScene = gameScene;
+      }
     }
+
+    lobbyTimeout--;
   };
   // END Lobby scene
 
