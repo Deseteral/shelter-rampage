@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run dev",
     "build": "node ./tools/build.js",
-    "dev": "nodemon ./tools/build.js",
+    "dev": "nodemon ./tools/build.js --dev",
     "size": "npm run build && node ./tools/size.js",
     "baker": "http-server ./tools -p 9001 -o -c-1"
   },
@@ -24,5 +24,8 @@
     "http-server": "0.11.1",
     "nodemon": "1.18.3",
     "rimraf": "2.6.2"
+  },
+  "nodemonConfig": {
+    "ignore": ["dist/*"]
   }
 }
