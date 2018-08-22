@@ -33,10 +33,10 @@
   const SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
 
   const DEFAULT_PLANE = { x: 0.52, y: -0.40 };
-  const DEFAULT_PLAYER = {
+  const DEFAULT_PLAYER = () => ({
     dir: { x: 0.61, y: 0.79 },
     life: 100,
-  };
+  });
 
   const ENV_COLOR = { r: 24, g: 200, b: 170 };
   const OBJECT_COLOR = { r: 255, g: 255, b: 14 };
@@ -120,7 +120,7 @@
   let score = 0;
   let enemies = [];
   let bullets = [];
-  let player = { ...DEFAULT_PLAYER };
+  let player = DEFAULT_PLAYER();
   let plane = { ...DEFAULT_PLANE };
   // END Game objects
 
@@ -192,6 +192,15 @@
     }
 
     return hit;
+  };
+
+  const rotatePlayer = (amount) => {
+    const oldDirX = player.dir.x;
+    player.dir.x = (player.dir.x * cos(amount)) - (player.dir.y * sin(amount));
+    player.dir.y = (oldDirX * sin(amount)) + (player.dir.y * cos(amount));
+    const oldPlaneX = plane.x;
+    plane.x = (plane.x * cos(amount)) - (plane.y * sin(amount));
+    plane.y = (oldPlaneX * sin(amount)) + (plane.y * cos(amount));
   };
 
   const shootBullet = (pos, dir, ownerPlayer) => {
@@ -813,14 +822,10 @@
     }
 
     // Rotate the player
-    const oldDirX = player.dir.x;
     let playerRotateAmount = -keyState.rotate * PLAYER_ROTATE_SPEED * 0.15;
-    player.dir.x = (player.dir.x * cos(playerRotateAmount)) - (player.dir.y * sin(playerRotateAmount));
-    player.dir.y = (oldDirX * sin(playerRotateAmount)) + (player.dir.y * cos(playerRotateAmount));
-    const oldPlaneX = plane.x;
-    plane.x = (plane.x * cos(playerRotateAmount)) - (plane.y * sin(playerRotateAmount));
-    plane.y = (oldPlaneX * sin(playerRotateAmount)) + (plane.y * cos(playerRotateAmount));
+    rotatePlayer(playerRotateAmount);
 
+    // Player shooting
     if (playerIsShooting) {
       shootBullet(player.pos, player.dir, true);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
@@ -867,7 +872,7 @@
   let lobbyScene = () => {
     // Game initialization
     if (!gameInitialized) {
-      player = { ...DEFAULT_PLAYER };
+      player = DEFAULT_PLAYER();
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
 
