@@ -117,6 +117,9 @@
   let gameInitialized = false;
   let lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
+  let transition = false;
+  let transitionProgress = 0;
+
   let level = null;
   let score = 0;
   let levelDepth = 0;
@@ -452,8 +455,10 @@
   let run = () => {
     if (keyState.debug) window.DEBUG = true; // TODO: DEBUG: Remove debug
 
-    mainGl.fillStyle = 'black';
-    mainGl.fillRect(0, 0, 360, 400);
+    if (!transition) {
+      mainGl.fillStyle = 'black';
+      mainGl.fillRect(0, 0, 360, 400);
+    }
 
     currentScene();
 
@@ -477,6 +482,33 @@
 
     window.requestAnimationFrame(run); // TODO: Could I get rid of window. ?
   };
+
+  // Transition state
+  const TRANSITION_STEP = 5;
+  const transitionScene = (nextScene) => () => {
+    transition = true;
+
+    mainGl.fillStyle = colorToString(ENV_COLOR);
+
+    for (let i = 0; i < 400; i += 40) {
+      mainGl.fillRect(0, i, transitionProgress, 20);
+    }
+
+    for (let i = 20; i < 400; i += 40) {
+      mainGl.fillRect(360 - transitionProgress, i, transitionProgress, 20);
+    }
+
+    transitionProgress += TRANSITION_STEP;
+
+    if (transitionProgress > 360) {
+      setTimeout(() => {
+        transition = false;
+        transitionProgress = 0;
+        currentScene = nextScene;
+      }, 600);
+    }
+  };
+  // END Transition state
 
   // Game scene
   let gameScene = () => {
@@ -850,11 +882,13 @@
     enemies = enemies.filter(e => e.life > 0);
 
     if (enemies.length <= 0) {
-      currentScene = lobbyScene; // eslint-disable-line no-use-before-define
+      setTimeout(() => {
+        currentScene = transitionScene(lobbyScene); // eslint-disable-line no-use-before-define
+      }, 2000);
     }
 
     if (player.life <= 0) {
-      currentScene = gameOverScene; // eslint-disable-line no-use-before-define
+      currentScene = transitionScene(gameOverScene); // eslint-disable-line no-use-before-define
     }
 
     // TODO: DEBUG: Remove minimap
@@ -903,7 +937,7 @@
         gameInitialized = false;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
-        currentScene = gameScene;
+        currentScene = transitionScene(gameScene);
       }
     }
 
@@ -924,7 +958,7 @@
 
       if (keyState.shoot) {
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
-        currentScene = lobbyScene;
+        currentScene = transitionScene(lobbyScene);
       }
     }
 
