@@ -111,6 +111,7 @@
   let lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
   let level = null;
+  let score = 0;
   let enemies = [];
   let bullets = [];
   let player = { ...DEFAULT_PLAYER };
@@ -819,7 +820,7 @@
     enemies = enemies.filter(e => e.life > 0);
 
     if (enemies.length <= 0) {
-      currentScene = lobbyScene;
+      currentScene = lobbyScene; // eslint-disable-line no-use-before-define
     }
 
     // TODO: DEBUG: Remove minimap
@@ -847,11 +848,17 @@
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
 
+      const hs = localStorage.getItem('hs');
+      if (score > hs || !hs) localStorage.setItem('hs', score);
+
       gameInitialized = true;
     }
 
     // Rendering score
+    const hs = localStorage.getItem('hs');
     drawText('31337 game', 10, 100);
+    drawText(`Score: ${score}`, 20, 128);
+    drawText(`High score: ${hs}`, 20, 152);
 
     // Switching to game screen
     if (lobbyTimeout <= 0) {
