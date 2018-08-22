@@ -1,3 +1,4 @@
+// TODO: Test on Windows 10
 // TODO: Make all consts - lets
 // TODO: Remove all DEBUG stuff
 // TODO: Find more vector operations to replace with vec* functions
@@ -62,7 +63,6 @@
     right: false,
     shoot: false,
     debug: false,
-    anyKey: false,
     rotate: 0,
   };
 
@@ -81,7 +81,6 @@
 
   document.addEventListener('keydown', e => {
     keyState[KEY_CODES[e.keyCode]] = true;
-    keyState.anyKey = true;
   });
 
   document.addEventListener('keyup', e => {
@@ -121,6 +120,12 @@
   // Utility functions
   const repeat = (times, cb, start = 0) => {
     for (let i = start; i < times; i++) cb(i);
+  };
+
+  const range = (from, to) => {
+    const arr = [];
+    for (let i = from; i <= to; i++) arr.push(i);
+    return arr;
   };
 
   const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
@@ -207,6 +212,46 @@
     oscillatorNode.start();
   };
   // END Utility functions
+
+  // Bake font
+  const FONT_SIZE = 24;
+  const FONT_GLYPH_SIZE = 2 * FONT_SIZE; // TODO: Precalc that
+  const fontGlyphs = {};
+  range(32, 126)
+    .map(a => String.fromCharCode(a))
+    .forEach((letter) => {
+      const c = document.createElement('canvas');
+      c.width = FONT_GLYPH_SIZE;
+      c.height = FONT_GLYPH_SIZE;
+      const fontGl = c.getContext('2d');
+
+      fontGl.font = `${FONT_SIZE}px monospace`;
+
+      fontGl.fillStyle = 'white';
+      fontGl.fillText(letter, 0, FONT_SIZE);
+
+      // Clear antialiasing
+      const pixels = fontGl.getImageData(0, 0, FONT_GLYPH_SIZE, FONT_GLYPH_SIZE).data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] !== 0 || pixels[i + 1] !== 0 || pixels[i + 2] !== 0) {
+          const idx = (i / 4) | 0;
+          const x = (idx % FONT_GLYPH_SIZE) | 0;
+          const y = (idx / FONT_GLYPH_SIZE) | 0;
+          fontGl.fillRect(x, y, 1, 1);
+        }
+      }
+
+      fontGlyphs[letter] = c;
+    });
+
+  const drawText = (text, x, y) => {
+    text
+      .split('')
+      .forEach((letter, idx) => {
+        mainGl.drawImage(fontGlyphs[letter], (x + (idx * (FONT_SIZE - 10))), y);
+      });
+  };
+  // END Bake font
 
   // Level generator
   const generateLevel = () => {
@@ -385,6 +430,9 @@
   let run = () => {
     if (keyState.debug) window.DEBUG = true; // TODO: DEBUG: Remove debug
 
+    mainGl.fillStyle = 'black';
+    mainGl.fillRect(0, 0, 360, 400);
+
     currentScene();
 
     if (window.DEBUG) { // TODO: DEBUG: Remove color counting
@@ -401,7 +449,6 @@
       console[logLevel](`Distinct colors in frame: ${colorCount}`);
     }
 
-    keyState.anyKey = false;
     keyState.rotate = 0;
 
     window.DEBUG = false; // TODO: DEBUG: Remove debug
@@ -803,10 +850,14 @@
       gameInitialized = true;
     }
 
-    if (lobbyTimeout <= 0) {
-      console.log('Press any key');
+    // Rendering score
+    drawText('31337 game', 10, 100);
 
-      if (keyState.anyKey) {
+    // Switching to game screen
+    if (lobbyTimeout <= 0) {
+      drawText('Press FIRE to continue', 10, 300);
+
+      if (keyState.shoot) {
         gameInitialized = false;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
