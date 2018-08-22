@@ -33,7 +33,11 @@
   const DEFAULT_PLANE = { x: 0.52, y: -0.40 };
   const DEFAULT_PLAYER = {
     dir: { x: 0.61, y: 0.79 },
+    life: 100,
   };
+
+  const ENV_COLOR = { r: 24, g: 200, b: 170 };
+  const OBJECT_COLOR = { r: 255, g: 255, b: 14 };
 
   const LOBBY_TIMEOUT_MAX = 60 * 2; // TODO: Precalculate that
 
@@ -534,7 +538,7 @@
       }
 
       enemies.forEach(e => {
-      // Bullet hits enemy
+        // Bullet hits enemy
         if (b.ownerPlayer && pointsDistance(b.pos, e.pos) < 0.5) {
           e.life -= 15;
           e.hit = true;
@@ -669,7 +673,7 @@
         if (!WALL_TEXTURE[texY]) continue;
         let textureShade = (0.5 + (WALL_TEXTURE[texY][texX] * 0.5));
 
-        let color = colorMul({ r: 24, g: 200, b: 170 }, (shadeFactor * textureShade)); // TODO: Extract base color somewhere
+        let color = colorMul(ENV_COLOR, (shadeFactor * textureShade)); // TODO: Extract base color somewhere
         gl.fillStyle = colorToString(color);
         gl.fillRect(x, y, 1, 1);
       }
@@ -733,7 +737,7 @@
       let lightBumpValue = 0.4;
       let shadeFactor = min((((drawEndY - drawStartY) / BUFFER_HEIGHT) + lightBumpValue), 1);
 
-      let color = colorMul({ r: 255, g: 255, b: 14 }, shadeFactor);
+      let color = colorMul(OBJECT_COLOR, shadeFactor);
 
       gl.fillStyle = currentSprite.hit ? 'white' : colorToString(color);
 
@@ -764,8 +768,13 @@
     const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
     mainGl.drawImage(offscreen, shakeX, shakeY, 360, 400);
+    // END Render offscreen buffer
 
-    // Rendering end
+    // Render health bar
+    mainGl.fillStyle = colorToString(OBJECT_COLOR);
+    const hpBarLength = ((player.life / 100) * 100) | 0;
+    mainGl.fillRect(10, 10, hpBarLength, 10);
+
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
 
