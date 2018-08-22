@@ -118,6 +118,7 @@
 
   let level = null;
   let score = 0;
+  let levelDepth = 0;
   let enemies = [];
   let bullets = [];
   let player = DEFAULT_PLAYER();
@@ -875,6 +876,7 @@
       player = DEFAULT_PLAYER();
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
+      levelDepth++;
 
       const hs = localStorage.getItem('hs');
       if (score > hs || !hs) localStorage.setItem('hs', score);
@@ -907,6 +909,21 @@
   // Game over scene
   let gameOverScene = () => {
     drawText('Game over', 10, 10);
+    drawText(`Your score is ${score}`, 10, 100);
+
+    const clearedFloors = (levelDepth - 1);
+    drawText(`You've cleared ${clearedFloors} floor${clearedFloors === 1 ? '' : 's'}`, 10, 130);
+
+    if (lobbyTimeout <= 0) {
+      drawText('Press FIRE to continue', 10, 300);
+
+      if (keyState.shoot) {
+        lobbyTimeout = LOBBY_TIMEOUT_MAX;
+        currentScene = lobbyScene;
+      }
+    }
+
+    lobbyTimeout--;
   };
   // END Game over scene
 
