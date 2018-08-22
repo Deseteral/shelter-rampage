@@ -21,6 +21,8 @@
   const PLAYER_MOVE_SPEED = 0.1;
   const PLAYER_ROTATE_SPEED = 0.03;
   const PLAYER_INVISIBILITY_TIMEOUT_MAX = 2 * 60; // TODO: Precalculate that
+  const PLAYER_BULLET_DAMAGE_TAKEN = 2;
+  const PLAYER_MELEE_DAMAGE_TAKEN = 5;
 
   const E1_MOVE_SPEED = 0.02; // e1 is shooting enemy
   const E2_MOVE_SPEED = 0.12; // e2 is melee enemy
@@ -514,6 +516,7 @@
         // Enemy touches player
         if (pointsDistance(e.pos, player.pos) <= 0.5) {
           e.life = 0;
+          player.life -= PLAYER_MELEE_DAMAGE_TAKEN;
         }
       }
 
@@ -559,6 +562,11 @@
           b.lifetime = 0;
         }
       });
+
+      // Bullet hits the player
+      if (!b.ownerPlayer && b.lifetime > 0 && pointsDistance(b.pos, player.pos) <= 0.5) {
+        player.life -= PLAYER_BULLET_DAMAGE_TAKEN;
+      }
     });
 
     // Render world
@@ -773,7 +781,7 @@
     // Render health bar
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     const hpBarLength = ((player.life / 100) * 100) | 0;
-    mainGl.fillRect(10, 10, hpBarLength, 10);
+    mainGl.fillRect(10, 10, hpBarLength, 10); // TODO: Render background for the hp bar
 
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
@@ -834,6 +842,10 @@
       currentScene = lobbyScene; // eslint-disable-line no-use-before-define
     }
 
+    if (player.life <= 0) {
+      currentScene = gameOverScene; // eslint-disable-line no-use-before-define
+    }
+
     // TODO: DEBUG: Remove minimap
     // Draw minimap
     // if (window.DEBUG_minimap) {
@@ -886,6 +898,12 @@
     lobbyTimeout--;
   };
   // END Lobby scene
+
+  // Game over scene
+  let gameOverScene = () => {
+    drawText('Game over', 10, 10);
+  };
+  // END Game over scene
 
   currentScene = lobbyScene;
   run(); // TODO: Put this at the very end
