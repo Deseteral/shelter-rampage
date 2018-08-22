@@ -6,6 +6,7 @@
 // TODO: Replace <= with < etc.
 // TODO: Replace empty arrow fn arg () with _     `() =>` to `_ =>`
 // TODO: Fix license and all that
+// TODO: Transition between screens
 
 (() => {
   // Constant values
@@ -233,9 +234,10 @@
   // Bake font
   const FONT_SIZE = 24;
   const FONT_GLYPH_SIZE = 2 * FONT_SIZE; // TODO: Precalc that
-  const fontGlyphs = {};
-  range(32, 126)
-    .map(a => String.fromCharCode(a))
+  const whiteFontGlyphs = {};
+
+  const bakeFont = (color, glyphs) => {
+    range(32, 126).map(a => String.fromCharCode(a))
     .forEach((letter) => {
       const c = document.createElement('canvas');
       c.width = FONT_GLYPH_SIZE;
@@ -244,7 +246,7 @@
 
       fontGl.font = `${FONT_SIZE}px monospace`;
 
-      fontGl.fillStyle = 'white';
+        fontGl.fillStyle = color;
       fontGl.fillText(letter, 0, FONT_SIZE);
 
       // Clear antialiasing
@@ -258,14 +260,17 @@
         }
       }
 
-      fontGlyphs[letter] = c;
+        glyphs[letter] = c;
     });
+  };
 
-  const drawText = (text, x, y) => {
+  bakeFont('white', whiteFontGlyphs);
+
+  const drawText = (text, x, y, glyphs = whiteFontGlyphs) => {
     text
       .split('')
       .forEach((letter, idx) => {
-        mainGl.drawImage(fontGlyphs[letter], (x + (idx * (FONT_SIZE - 10))), y);
+        mainGl.drawImage(glyphs[letter], (x + (idx * (FONT_SIZE - 10))), y);
       });
   };
   // END Bake font
