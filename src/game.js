@@ -238,30 +238,30 @@
 
   const bakeFont = (color, glyphs) => {
     range(32, 126).map(a => String.fromCharCode(a))
-    .forEach((letter) => {
-      const c = document.createElement('canvas');
-      c.width = FONT_GLYPH_SIZE;
-      c.height = FONT_GLYPH_SIZE;
-      const fontGl = c.getContext('2d');
+      .forEach((letter) => {
+        const c = document.createElement('canvas');
+        c.width = FONT_GLYPH_SIZE;
+        c.height = FONT_GLYPH_SIZE;
+        const fontGl = c.getContext('2d');
 
-      fontGl.font = `${FONT_SIZE}px monospace`;
+        fontGl.font = `${FONT_SIZE}px monospace`;
 
         fontGl.fillStyle = color;
-      fontGl.fillText(letter, 0, FONT_SIZE);
+        fontGl.fillText(letter, 0, FONT_SIZE);
 
-      // Clear antialiasing
-      const pixels = fontGl.getImageData(0, 0, FONT_GLYPH_SIZE, FONT_GLYPH_SIZE).data;
-      for (let i = 0; i < pixels.length; i += 4) {
-        if (pixels[i] !== 0 || pixels[i + 1] !== 0 || pixels[i + 2] !== 0) {
-          const idx = (i / 4) | 0;
-          const x = (idx % FONT_GLYPH_SIZE) | 0;
-          const y = (idx / FONT_GLYPH_SIZE) | 0;
-          fontGl.fillRect(x, y, 1, 1);
+        // Clear antialiasing
+        const pixels = fontGl.getImageData(0, 0, FONT_GLYPH_SIZE, FONT_GLYPH_SIZE).data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          if (pixels[i] !== 0 || pixels[i + 1] !== 0 || pixels[i + 2] !== 0) {
+            const idx = (i / 4) | 0;
+            const x = (idx % FONT_GLYPH_SIZE) | 0;
+            const y = (idx / FONT_GLYPH_SIZE) | 0;
+            fontGl.fillRect(x, y, 1, 1);
+          }
         }
-      }
 
         glyphs[letter] = c;
-    });
+      });
   };
 
   bakeFont('white', whiteFontGlyphs);
@@ -684,19 +684,18 @@
       if (side === 0 && rayDirX > 0) texX = TEXTURE_SIZE - texX - 1;
       if (side === 1 && rayDirY < 0) texX = TEXTURE_SIZE - texX - 1;
 
-      // TODO: Prevent walls ever having shadeFactor = 0 (so that they don't disappear)
       let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT; // 0 to 1
-      let lightBumpValue = 0.1; // TODO: REFACTOR THIS
-      let shadeFactor = min((((lightScale * 16) | 0) / 16) + lightBumpValue, 1);
+      let lightBumpValue = 0.1;
+      let shadeFactor = min((((lightScale * 10) | 0) / 10) + lightBumpValue, 1);
 
       for (let y = drawStart; y < drawEnd; y++) {
         let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
         let texY = (((d * TEXTURE_SIZE) / lineHeight) / 256) | 0;
 
         if (!WALL_TEXTURE[texY]) continue;
-        let textureShade = (0.5 + (WALL_TEXTURE[texY][texX] * 0.5));
+        let textureShade = min(1, (WALL_TEXTURE[texY][texX] + 0.5));
 
-        let color = colorMul(ENV_COLOR, (shadeFactor * textureShade)); // TODO: Extract base color somewhere
+        let color = colorMul(ENV_COLOR, (shadeFactor * textureShade));
         gl.fillStyle = colorToString(color);
         gl.fillRect(x, y, 1, 1);
       }
@@ -758,7 +757,8 @@
       if (drawEndX >= BUFFER_WIDTH) drawEndX = BUFFER_WIDTH - 1;
 
       let lightBumpValue = 0.4;
-      let shadeFactor = min((((drawEndY - drawStartY) / BUFFER_HEIGHT) + lightBumpValue), 1);
+      let lightDistance = ((drawEndY - drawStartY) / BUFFER_HEIGHT); // from 0 to 1
+      let shadeFactor = min(1, (((lightDistance * 10) | 0) / 10) + lightBumpValue);
 
       let color = colorMul(OBJECT_COLOR, shadeFactor);
 
