@@ -539,6 +539,8 @@
           e.life -= 15;
           e.hit = true;
 
+          score += 15;
+
           let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
           let canRecoil = true;
           enemies.forEach(ee => {
