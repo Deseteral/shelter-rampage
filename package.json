@@ -26,6 +26,6 @@
     "rimraf": "2.6.2"
   },
   "nodemonConfig": {
-    "ignore": ["dist/*"]
+    "ignore": ["dist/*", "dev/*"]
   }
 }

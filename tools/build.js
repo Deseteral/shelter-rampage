@@ -3,9 +3,10 @@ const babel = require('@babel/core');
 const rimraf = require('rimraf');
 
 const dev = process.argv[2] === '--dev';
+const distDir = dev ? 'dev' : 'dist';
 
-rimraf.sync('./dist');
-fs.mkdirSync('./dist');
+rimraf.sync(`./${distDir}`);
+fs.mkdirSync(`./${distDir}`);
 
 const inputHtml = fs.readFileSync('./src/index.html', { encoding: 'utf8' });
 
@@ -23,13 +24,13 @@ function writeFiles(htmlFileName, isDev) {
     isDev ? '<script src="game.js"></script>' : `<script>${code}</script>`,
   ].join('');
 
-  fs.writeFileSync(`./dist/${htmlFileName}.html`, outputHtml, { encoding: 'utf8' });
-  if (isDev) fs.writeFileSync('./dist/game.js', code, { encoding: 'utf8' });
+  fs.writeFileSync(`./${distDir}/${htmlFileName}.htm`, outputHtml, { encoding: 'utf8' });
+  if (isDev) fs.writeFileSync(`./${distDir}/game.js`, code, { encoding: 'utf8' });
 }
 
 writeFiles('index', false);
 if (dev) writeFiles('index-dev', dev);
 
-const { size } = fs.statSync('./dist/index.html');
+const { size } = fs.statSync(`./${distDir}/index.htm`);
 const percent = ((size / 31337) * 100).toFixed(2);
 console.log(`${size} bytes, ${percent}%`);
