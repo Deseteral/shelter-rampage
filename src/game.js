@@ -464,7 +464,7 @@
       return pos;
     };
 
-    repeat(10, () => { // Enemy amount has to be less then number of free tiles
+    repeat(3, () => { // Enemy amount has to be less then number of free tiles
       enemies.push({
         sprite: 'e1',
         pos: getPos(),
@@ -989,12 +989,13 @@
     }
 
     // Rendering score
-    drawText('31337 game', 10, 100);
-    drawText(`Score: ${score}`, 20, 128);
+    drawText('Shelter Rampage', 75, 20);
+
+    if (score > 0) drawText(`Score: ${score}`, 10, 150);
 
     // Switching to game screen
     if (lobbyTimeout <= 0) {
-      drawText('Press FIRE to continue', 10, 300);
+      drawText('Press FIRE to continue', 10, 360);
 
       if (keyState.shoot) {
         gameInitialized = false;
@@ -1010,7 +1011,7 @@
 
   // Game over scene
   let gameOverScene = () => {
-    drawText('Game over', 10, 10);
+    drawText('Game over', 120, 10);
     drawText(`Your score is ${score}`, 10, 100);
 
     const clearedFloors = (levelDepth - 1);
@@ -1018,7 +1019,7 @@
     drawText(`High score: ${localStorage.getItem('hs')}`, 10, 190);
 
     if (lobbyTimeout <= 0) {
-      drawText('Press FIRE to continue', 10, 300);
+      drawText('Press FIRE to continue', 10, 360);
 
       if (keyState.shoot) {
         score = 0;
