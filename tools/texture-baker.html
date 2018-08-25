@@ -44,10 +44,14 @@
   (async () => {
     const template =
 `
-const WALL_TEXTURE = textureUnpack(${await bakeImage('wall')});
+const WALL_TEX = [
+  textureUnpack(${await bakeImage('wall1')}),
+  textureUnpack(${await bakeImage('wall2')}),
+  textureUnpack(${await bakeImage('wall3')}),
+];
 const SPRITE_TEX = {
-  e1: textureUnpack(${await bakeImage('testEnemy')}),
-  e2: textureUnpack(${await bakeImage('meleeEnemy')}),
+  e1: textureUnpack(${await bakeImage('e1')}),
+  e2: textureUnpack(${await bakeImage('e2')}),
   b: textureUnpack(${await bakeImage('bullet')}),
 };
 `;

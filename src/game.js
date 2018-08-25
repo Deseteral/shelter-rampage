@@ -50,7 +50,12 @@
 
   // Textures
   const textureUnpack = (hexArray) => hexArray.map(h => parseInt(h, 16).toString(2).substr(1).split(''));
-  const WALL_TEXTURE = textureUnpack(['10000', '10000', '120f0', '1400c', '14002', '1240c', '12430', '12440', '12440', '12030', '12008', '12004', '12018', '11fe0', '10000', '10000']);
+
+  const WALL_TEX = [
+    textureUnpack(['10000', '11ff8', '13ffc', '17ffe', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '17ffe', '13ffc', '11ff8', '10000']),
+    textureUnpack(['10000', '1011e', '111b7', '13d27', '11c3f', '10e3f', '1661e', '13000', '11000', '10000', '17ffe', '1c7ff', '1c7ff', '1ffff', '17ffe', '10000']),
+    textureUnpack(['1383c', '17c7e', '14c4e', '14c4e', '14c7e', '17c7e', '17c7e', '17c7e', '17c3c', '17c00', '17c3c', '17c7e', '17c6e', '17c5e', '17c7e', '1383c']),
+  ];
   const SPRITE_TEX = {
     e1: textureUnpack(['10000', '10000', '103c0', '103c0', '10ff0', '10ff0', '10c30', '10c30', '10ff0', '10ff0', '130cc', '130cc', '133cc', '133cc', '1c333', '1c333']),
     e2: textureUnpack(['10000', '10000', '10000', '10000', '10c30', '10c30', '13ffc', '13ffc', '103c0', '103c0', '10ff0', '10ff0', '10000', '10000', '10000', '10000']),
@@ -454,6 +459,13 @@
 
     removeClosedRooms(m);
 
+    // Randomize walls
+    repeat(LEVEL_SIZE, (y) => {
+      repeat(LEVEL_SIZE, (x) => {
+        if (m[x][y]) m[x][y] = randomInt(1, WALL_TEX.length);
+      });
+    });
+
     let floorTiles = [];
     let playerPlaced = false;
 
@@ -777,8 +789,9 @@
         let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
         let texY = (((d * TEXTURE_SIZE) / lineHeight) / 256) | 0;
 
-        if (!WALL_TEXTURE[texY]) continue;
-        let textureShade = min(1, (WALL_TEXTURE[texY][texX] + 0.5));
+        const wallTexture = WALL_TEX[level[mapX][mapY] - 1];
+        if (!wallTexture[texY]) continue;
+        let textureShade = min(1, (wallTexture[texY][texX] + 0.5));
 
         let color = colorMul(ENV_COLOR, (shadeFactor * textureShade));
         gl.fillStyle = colorToString(color);
