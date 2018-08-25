@@ -45,9 +45,6 @@
     gunHeatBlock: false,
   });
 
-  const ENV_COLOR = { r: 24, g: 200, b: 170 };
-  const OBJECT_COLOR = { r: 255, g: 255, b: 14 };
-
   const LOBBY_TIMEOUT_MAX = 60 * 2; // TODO: Precalculate that
 
   const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
@@ -175,6 +172,7 @@
 
   const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
   const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
+  const colorInv = (c) => ({ r: -c.r + 255, g: -c.g + 255, b: -c.b + 255 });
 
   const randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
   const randomInt = (min, max) => { // eslint-disable-line no-shadow
@@ -302,6 +300,18 @@
       });
   };
   // END Bake font
+
+  // Colors
+  let ENV_COLOR;
+  let OBJECT_COLOR;
+
+  const makeColors = () => {
+    ENV_COLOR = { r: randomInt(30, 255), g: randomInt(30, 255), b: randomInt(30, 255) };
+    OBJECT_COLOR = colorInv(ENV_COLOR);
+  };
+
+  makeColors();
+  // END Colors
 
   // Level generator
   const generateLevel = () => {
@@ -952,6 +962,7 @@
       player = DEFAULT_PLAYER();
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
+      makeColors();
       levelDepth++;
 
       const hs = localStorage.getItem('hs');
