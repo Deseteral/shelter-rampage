@@ -232,6 +232,25 @@
     gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.015);
     oscillatorNode.start();
   };
+
+  // const soundE2 = distance => {
+  //   const oscillatorNode = audioContext.createOscillator();
+  //   const gainNode = audioContext.createGain();
+
+  //   const distanceScale = ((1 / distance) * 5);
+
+  //   console.log(distanceScale);
+
+  //   oscillatorNode.type = 'sawtooth';
+  //   oscillatorNode.frequency.value = 2;
+
+  //   oscillatorNode.connect(gainNode);
+  //   gainNode.connect(audioContext.destination);
+
+  //   gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+  //   gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.015);
+  //   oscillatorNode.start();
+  // };
   // END Utility functions
 
   // Bake font
@@ -536,6 +555,8 @@
         e.dir = randomDir();
         e.changeDirTimer = enemyDirTimer();
       }
+
+      // soundE2(pointsDistance(e.pos, player.pos));
 
       enemies.forEach(ee => {
         if (ee === e) return;
