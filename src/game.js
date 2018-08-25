@@ -60,6 +60,7 @@
     e1: textureUnpack(['10000', '10000', '103c0', '103c0', '10ff0', '10ff0', '10c30', '10c30', '10ff0', '10ff0', '130cc', '130cc', '133cc', '133cc', '1c333', '1c333']),
     e2: textureUnpack(['10000', '10000', '10000', '10000', '10c30', '10c30', '13ffc', '13ffc', '103c0', '103c0', '10ff0', '10ff0', '10000', '10000', '10000', '10000']),
     b: textureUnpack(['10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '103c0', '103c0', '103c0', '103c0', '103c0', '103c0']),
+    m: textureUnpack(['10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10ff0', '11e78', '11e78', '11818', '11818', '11e78', '11e78', '10ff0']),
   };
   // END Textures
 
@@ -135,6 +136,7 @@
   let levelDepth = 0;
   let enemies = [];
   let bullets = [];
+  let powerups = [];
   let player = DEFAULT_PLAYER();
   let plane = { ...DEFAULT_PLANE };
   // END Game objects
@@ -238,6 +240,13 @@
       changeDirTimer: enemyDirTimer(),
       life: 100,
       shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
+    });
+  };
+
+  const makeMedipack = (pos) => {
+    powerups.push({
+      sprite: 'm',
+      pos,
     });
   };
 
@@ -490,6 +499,11 @@
       return pos;
     };
 
+    repeat(levelDepth > 3 ? 2 : 1, () => {
+      let pos = floorTiles.pop();
+      makeMedipack(pos);
+    });
+
     repeat(min(20, randomInt(1 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
     repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
 
@@ -681,6 +695,17 @@
       }
     });
 
+    powerups.forEach(pu => {
+      if (pointsDistance(pu.pos, player.pos) <= 0.5) {
+        if (pu.sprite === 'm') {
+          player.life = 100;
+          pu.used = true;
+        }
+      }
+    });
+
+    powerups = powerups.filter(pu => !pu.used);
+
     // Render world
     const zBuffer = []; // for every vertical line
     const spriteOrder = [];
@@ -802,7 +827,7 @@
     }
 
     // Sprite casting
-    const sprites = [].concat(enemies, bullets);
+    const sprites = [].concat(enemies, bullets, powerups);
 
     // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
     for (let i = 0; i < sprites.length; i++) {
@@ -961,6 +986,9 @@
       .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
       .filter(b => b.lifetime > 0);
 
+    enemies.forEach(e => {
+      if (e.life <= 0 && randomInt(0, 100) < 10) makeMedipack(e.pos);
+    });
     enemies = enemies.filter(e => e.life > 0);
 
     if (enemies.length <= 0) {
