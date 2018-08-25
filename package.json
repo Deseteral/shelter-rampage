@@ -1,8 +1,10 @@
 {
-  "name": "dungeon-prototype",
+  "name": "shelter-rampage",
   "version": "1.0.0",
-  "description": "",
+  "description": "My game for the Gynvael's Summer GameDev Challenge 2018",
   "main": "src/game.js",
+  "author": "Deseteral <deseteral@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "start": "npm run dev",
     "build": "node ./tools/build.js",
@@ -10,8 +12,6 @@
     "size": "npm run build && node ./tools/size.js",
     "baker": "http-server ./tools -p 9001 -o -c-1"
   },
-  "author": "Deseteral <deseteral@gmail.com>",
-  "license": "ISC",
   "devDependencies": {
     "@babel/core": "7.0.0-rc.1",
     "@babel/plugin-syntax-object-rest-spread": "7.0.0-rc.1",
