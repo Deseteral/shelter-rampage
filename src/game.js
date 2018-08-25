@@ -194,6 +194,14 @@
   const colorInv = (c) => ({ r: -c.r + 255, g: -c.g + 255, b: -c.b + 255 });
   const colorDarkenOnce = (c) => colorMul(c, 0.5);
 
+  const strokeRect = (x, y, w, h, rgl) => {
+    rgl.fillRect(x, y, w, 1);
+    rgl.fillRect(x, y + h, w, 1);
+
+    rgl.fillRect(x, y, 1, h);
+    rgl.fillRect(x + w, y, 1, h);
+  };
+
   const randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
   const randomInt = (min, max) => { // eslint-disable-line no-shadow
     min = ceil(min);
@@ -946,9 +954,8 @@
     mainGl.fillRect(10, 380, heatBarLength, 10);
 
     // Render special
-    mainGl.strokeStyle = colorToString(OBJECT_COLOR);
-    repeat(4, (idx) => mainGl.strokeRect(280 + (idx * 20), 370, 16, 20));
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
+    repeat(4, (idx) => strokeRect(280 + (idx * 20), 370, 16, 20, mainGl));
     repeat(specialCounter, (idx) => mainGl.fillRect(280 + (idx * 20), 370, 16, 20));
 
     // Input processing
