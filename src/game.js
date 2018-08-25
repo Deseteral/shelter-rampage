@@ -961,10 +961,8 @@
     }
 
     // Rendering score
-    const hs = localStorage.getItem('hs');
     drawText('31337 game', 10, 100);
     drawText(`Score: ${score}`, 20, 128);
-    drawText(`High score: ${hs}`, 20, 152);
 
     // Switching to game screen
     if (lobbyTimeout <= 0) {
@@ -989,6 +987,7 @@
 
     const clearedFloors = (levelDepth - 1);
     drawText(`You've cleared ${clearedFloors} floor${clearedFloors === 1 ? '' : 's'}`, 10, 130);
+    drawText(`High score: ${localStorage.getItem('hs')}`, 10, 190);
 
     if (lobbyTimeout <= 0) {
       drawText('Press FIRE to continue', 10, 300);
