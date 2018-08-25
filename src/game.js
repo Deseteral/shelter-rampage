@@ -16,7 +16,7 @@
     sin, cos, floor, random, sqrt, ceil, min, max, abs,
   } = Math;
 
-  const TEXTURE_SIZE = 8;
+  const TEXTURE_SIZE = 16;
   const BUFFER_WIDTH = 90;
   const BUFFER_HEIGHT = 100;
   const LEVEL_SIZE = 32;
@@ -46,15 +46,17 @@
   });
 
   const LOBBY_TIMEOUT_MAX = 60 * 2; // TODO: Precalculate that
-
-  const textureUnpack = t => t.match(/.{1,8}/g).map(s => s.split('').map(n => parseInt(n, 10)));
-  const WALL_TEXTURE = textureUnpack('0000000001100110011001100000000000111100011111100110011000000000');
-  const SPRITE_TEX = {
-    e1: textureUnpack('0000000000011000001111000010010000111100010010100101101010010101'),
-    e2: textureUnpack('0000000000000000001001000111111000011000001111000000000000000000'),
-    b: textureUnpack('0000000000000000000000000000000000000000000110000001100000011000'),
-  };
   // END Constant values
+
+  // Textures
+  const textureUnpack = (hexArray) => hexArray.map(h => parseInt(h, 16).toString(2).substr(1).split(''));
+  const WALL_TEXTURE = textureUnpack(['10000', '10000', '120f0', '1400c', '14002', '1240c', '12430', '12440', '12440', '12030', '12008', '12004', '12018', '11fe0', '10000', '10000']);
+  const SPRITE_TEX = {
+    e1: textureUnpack(['10000', '10000', '103c0', '103c0', '10ff0', '10ff0', '10c30', '10c30', '10ff0', '10ff0', '130cc', '130cc', '133cc', '133cc', '1c333', '1c333']),
+    e2: textureUnpack(['10000', '10000', '10000', '10000', '10c30', '10c30', '13ffc', '13ffc', '103c0', '103c0', '10ff0', '10ff0', '10000', '10000', '10000', '10000']),
+    b: textureUnpack(['10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '103c0', '103c0', '103c0', '103c0', '103c0', '103c0']),
+  };
+  // END Textures
 
   // Keyboard state
   let KEY_CODES = {
@@ -821,7 +823,7 @@
       // parameters for scaling and moving the sprites
       const uDiv = 2;
       const vDiv = 2;
-      const vMove = 8;
+      const vMove = TEXTURE_SIZE;
       let vMoveScreen = (vMove / transformY) | 0;
 
       // calculate height of the sprite on screen
@@ -844,7 +846,6 @@
       let shadeFactor = min(1, (((lightDistance * 10) | 0) / 10) + lightBumpValue);
 
       let color = colorMul(OBJECT_COLOR, shadeFactor);
-
       gl.fillStyle = currentSprite.hit ? 'white' : colorToString(color);
 
       // loop through every vertical stripe of the sprite on screen
@@ -862,7 +863,9 @@
             let texY = (((d * TEXTURE_SIZE) / spriteHeight) / 256) | 0;
 
             if (!spriteTexture[texY]) continue;
-            if (spriteTexture[texY][texX] === 1) gl.fillRect(stripe, y, 1, 1);
+            if (spriteTexture[texY][texX] === '1') {
+              gl.fillRect(stripe, y, 1, 1);
+            }
           }
         }
       }

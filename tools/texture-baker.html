@@ -1,33 +1,26 @@
 <script>
   // Config variables
-  const files = [
-    'testWall',
-    'testEnemy',
-    'meleeEnemy',
-    'bullet'
-  ];
-  const textureSize = 8;
-  const textureFormat = 'png';
-  const resourcePath = './resources';
-  const unpackFunctionName = 'textureUnpack';
+  const TEXTURE_SIZE = 16;
+  const TEXTURE_FORMAT = 'png';
+  const RESOURCE_PATH = './resources';
 </script>
 <script>
-  function loadImage(src, name) {
+  function bakeImage(src, name) {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
-      canvas.width = textureSize;
-      canvas.height = textureSize;
+      canvas.width = TEXTURE_SIZE;
+      canvas.height = TEXTURE_SIZE;
       const ctx = canvas.getContext('2d');
       ctx.imageSmoothingEnabled = false;
 
       let binary = '';
 
       const img = new Image();
-      img.src = src;
+      img.src = `${RESOURCE_PATH}/${src}.${TEXTURE_FORMAT}`;
       img.crossOrigin = "Anonymous";
       img.onload = () => {
         ctx.drawImage(img, 0, 0);
-        const pixels = ctx.getImageData(0, 0, textureSize, textureSize).data;
+        const pixels = ctx.getImageData(0, 0, TEXTURE_SIZE, TEXTURE_SIZE).data;
         for (let i = 0; i < pixels.length; i += 4) {
           const pixel = { r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] };
 
@@ -38,22 +31,28 @@
           }
         }
 
-        resolve({ name, binary });
+        const hexArray = binary
+          .match(/.{1,16}/g) // TEXTURE_SIZE
+          .map(s => `1${s}`)
+          .map(s => parseInt(s, 2).toString(16))
+
+        resolve(`[${hexArray.map(h => `'${h}', `).join('').slice(0, -2)}]`);
       }
     });
   }
 
-  const workers = files
-    .map(name => ({ src: `${resourcePath}/${name}.${textureFormat}`, name }))
-    .map(({ src, name }) => loadImage(src, name));
-
-  Promise.all(workers).then((arr) => {
-    const out = arr
-      .map(({ name, binary }) => `const ${name}Texture = ${unpackFunctionName}('${binary}');`)
-      .join('<br>\n');
-    document.getElementById('out').innerHTML = out;
-  });
-
+  (async () => {
+    const template =
+`
+const WALL_TEXTURE = textureUnpack(${await bakeImage('wall')});
+const SPRITE_TEX = {
+  e1: textureUnpack(${await bakeImage('testEnemy')}),
+  e2: textureUnpack(${await bakeImage('meleeEnemy')}),
+  b: textureUnpack(${await bakeImage('bullet')}),
+};
+`;
+    document.getElementById('out').innerHTML = template;
+  })();
 </script>
 
-<div id="out" style="font-family: monospace;"></div>
+<div id="out" style="font-family: monospace; white-space: pre;"></div>
