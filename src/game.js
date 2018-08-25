@@ -978,11 +978,15 @@
   let lobbyScene = () => {
     // Game initialization
     if (!gameInitialized) {
-      player = DEFAULT_PLAYER();
-      plane = { ...DEFAULT_PLANE };
-      level = generateLevel();
       makeColors();
       makeFonts();
+
+      let hp = player.life;
+      player = DEFAULT_PLAYER();
+      player.life = hp;
+
+      plane = { ...DEFAULT_PLANE };
+      level = generateLevel();
       levelDepth++;
 
       const hs = localStorage.getItem('hs');
