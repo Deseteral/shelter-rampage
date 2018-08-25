@@ -208,11 +208,11 @@
     plane.y = (oldPlaneX * sin(amount)) + (plane.y * cos(amount));
   };
 
-  const shootBullet = (pos, dir, ownerPlayer) => {
+  const shootBullet = (pos, dir, ownerPlayer, spread) => {
     bullets.push({
       sprite: 'b',
       pos: { ...pos },
-      dir: { ...dir },
+      dir: vecRotate(dir, randomFloat(-spread, spread)),
       lifetime: BULLET_LIFETIME_FRAMES,
       ownerPlayer,
     });
@@ -574,8 +574,7 @@
           }
 
           if (e.shootingFrameTimeout <= 0) {
-            let bulletDir = vecRotate(dirToPlayer, randomFloat(-0.2, 0.2));
-            shootBullet(e.pos, bulletDir, false);
+            shootBullet(e.pos, dirToPlayer, false, 0.2);
             e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
             soundShoot(1 / max(distanceEnemyToPlayer, 1));
           }
@@ -886,7 +885,7 @@
 
     // Player shooting
     if (playerIsShooting) {
-      shootBullet(player.pos, player.dir, true);
+      shootBullet(player.pos, player.dir, true, 0.1);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
       soundShoot(0.75);
     }
@@ -978,6 +977,8 @@
       drawText('Press FIRE to continue', 10, 300);
 
       if (keyState.shoot) {
+        score = 0;
+        levelDepth = 0;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
         currentScene = transitionScene(lobbyScene);
       }
