@@ -173,6 +173,7 @@
   const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
   const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
   const colorInv = (c) => ({ r: -c.r + 255, g: -c.g + 255, b: -c.b + 255 });
+  const colorDarkenOnce = (c) => colorMul(c, 0.5);
 
   const randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
   const randomInt = (min, max) => { // eslint-disable-line no-shadow
@@ -876,14 +877,18 @@
     // END Render offscreen buffer
 
     // Render health bar
+    mainGl.fillStyle = colorToString(colorDarkenOnce(OBJECT_COLOR));
+    mainGl.fillRect(10, 10, 100, 10);
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     const hpBarLength = ((player.life / 100) * 100) | 0;
-    mainGl.fillRect(10, 10, hpBarLength, 10); // TODO: Render background for the hp bar
+    mainGl.fillRect(10, 10, hpBarLength, 10);
 
     // Render gun heat
+    mainGl.fillStyle = colorToString(colorDarkenOnce(OBJECT_COLOR));
+    mainGl.fillRect(10, 380, 50, 10);
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     const heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
-    mainGl.fillRect(10, 380, heatBarLength, 10); // TODO: Render background for the heat bar
+    mainGl.fillRect(10, 380, heatBarLength, 10);
 
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
