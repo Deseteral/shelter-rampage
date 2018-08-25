@@ -694,7 +694,8 @@
 
           if (e.life <= 0) specialCounter = min(SPECIAL_REQUIRED, specialCounter + 1);
 
-          score += 15;
+          score += (101 - player.life) * levelDepth;
+          console.log(score);
 
           let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
           let canRecoil = true;
