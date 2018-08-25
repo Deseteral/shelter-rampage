@@ -26,7 +26,7 @@
   const PLAYER_INVISIBILITY_TIMEOUT_MAX = 2 * 60; // TODO: Precalculate that
   const PLAYER_BULLET_DAMAGE_TAKEN = 2;
   const PLAYER_MELEE_DAMAGE_TAKEN = 5;
-  const PLAYER_GUN_HEAT_MAX = 5;
+  const PLAYER_GUN_HEAT_MAX = 10;
   const PLAYER_GUN_HEAT_RECOVER = 0.1;
 
   const E1_MOVE_SPEED = 0.02; // e1 is shooting enemy
@@ -257,10 +257,23 @@
   // };
   // END Utility functions
 
+  // Colors
+  let ENV_COLOR;
+  let OBJECT_COLOR;
+
+  const makeColors = () => {
+    ENV_COLOR = { r: randomInt(30, 255), g: randomInt(30, 255), b: randomInt(30, 255) };
+    OBJECT_COLOR = colorInv(ENV_COLOR);
+  };
+
+  makeColors();
+  // END Colors
+
   // Bake font
   const FONT_SIZE = 24;
   const FONT_GLYPH_SIZE = 2 * FONT_SIZE; // TODO: Precalc that
-  const whiteFontGlyphs = {};
+  const glyphsPrimary = {};
+  const glyphsSecondary = {};
 
   const bakeFont = (color, glyphs) => {
     range(32, 126).map(a => String.fromCharCode(a))
@@ -290,28 +303,21 @@
       });
   };
 
-  bakeFont('white', whiteFontGlyphs);
+  const makeFonts = () => {
+    bakeFont(colorToString(ENV_COLOR), glyphsPrimary);
+    bakeFont(colorToString(OBJECT_COLOR), glyphsSecondary);
+  };
 
-  const drawText = (text, x, y, glyphs = whiteFontGlyphs) => {
+  makeFonts();
+
+  const drawText = (text, x, y) => {
     text
       .split('')
       .forEach((letter, idx) => {
-        mainGl.drawImage(glyphs[letter], (x + (idx * (FONT_SIZE - 10))), y);
+        mainGl.drawImage(glyphsPrimary[letter], (x + (idx * (FONT_SIZE - 10))), y);
       });
   };
   // END Bake font
-
-  // Colors
-  let ENV_COLOR;
-  let OBJECT_COLOR;
-
-  const makeColors = () => {
-    ENV_COLOR = { r: randomInt(30, 255), g: randomInt(30, 255), b: randomInt(30, 255) };
-    OBJECT_COLOR = colorInv(ENV_COLOR);
-  };
-
-  makeColors();
-  // END Colors
 
   // Level generator
   const generateLevel = () => {
@@ -459,7 +465,7 @@
       });
     });
 
-    repeat(10, () => {
+    repeat(3, () => {
       enemies.push({
         sprite: 'e2',
         pos: getPos(),
@@ -963,6 +969,7 @@
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
       makeColors();
+      makeFonts();
       levelDepth++;
 
       const hs = localStorage.getItem('hs');
