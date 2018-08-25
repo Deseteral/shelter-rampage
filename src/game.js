@@ -184,7 +184,7 @@
 
   const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
   const canEnemySeePlayer = (enemy) => {
-    if (invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10) return false;
+    if (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10) return false;
 
     let dirVec = dirVecPoints(enemy.pos, player.pos);
     let castPos = { ...enemy.pos };
@@ -219,6 +219,17 @@
       dir: vecRotate(dir, randomFloat(-spread, spread)),
       lifetime: BULLET_LIFETIME_FRAMES,
       ownerPlayer,
+    });
+  };
+
+  const makeEnemy = (type, pos) => {
+    enemies.push({
+      sprite: type,
+      pos,
+      dir: randomDir(),
+      changeDirTimer: enemyDirTimer(),
+      life: 100,
+      shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
     });
   };
 
@@ -464,27 +475,8 @@
       return pos;
     };
 
-    repeat(3, () => { // Enemy amount has to be less then number of free tiles
-      enemies.push({
-        sprite: 'e1',
-        pos: getPos(),
-        dir: randomDir(),
-        changeDirTimer: enemyDirTimer(),
-        life: 100,
-        shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
-      });
-    });
-
-    repeat(3, () => {
-      enemies.push({
-        sprite: 'e2',
-        pos: getPos(),
-        dir: randomDir(),
-        changeDirTimer: enemyDirTimer(),
-        life: 50,
-        shootingFrameTimeout: SHOOTING_FRAME_TIMEOUT_ENEMY_MAX,
-      });
-    });
+    repeat(3, () => makeEnemy('e1', getPos()));
+    repeat(3, () => makeEnemy('e2', getPos()));
 
     return m;
   };
@@ -614,7 +606,13 @@
 
         // Enemy touches player
         if (pointsDistance(e.pos, player.pos) <= 0.5) {
-          e.life = 0;
+          if (e.sprite === 'e1') {
+            e.life = 0;
+          } else {
+            e.dir = vecMul(e.dir, -1);
+            e.blind = true;
+            setTimeout(() => { e.blind = false; }, 5000);
+          }
           player.life -= PLAYER_MELEE_DAMAGE_TAKEN;
         }
       }
