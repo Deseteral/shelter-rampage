@@ -39,6 +39,8 @@
   const DEFAULT_PLAYER = () => ({
     dir: { x: 0.61, y: 0.79 },
     life: 100,
+    gunHeat: PLAYER_GUN_HEAT_MAX,
+    gunHeatBlock: false,
   });
 
   const ENV_COLOR = { r: 24, g: 200, b: 170 };
@@ -129,8 +131,6 @@
   let bullets = [];
   let player = DEFAULT_PLAYER();
   let plane = { ...DEFAULT_PLANE };
-  let gunHeat = PLAYER_GUN_HEAT_MAX;
-  let gunHeatBlock = false;
   // END Game objects
 
   // Utility functions
@@ -842,7 +842,7 @@
     }
 
     // Render offscreen buffer
-    const playerIsShooting = keyState.shoot && shootingFrameTimeout <= 0 && gunHeat > 0 && !gunHeatBlock;
+    const playerIsShooting = keyState.shoot && shootingFrameTimeout <= 0 && !player.gunHeatBlock;
     const shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
     const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
@@ -856,8 +856,8 @@
 
     // Render gun heat
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
-    const heatBarLength = ((gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
-    mainGl.fillRect(10, 340, heatBarLength, 10); // TODO: Render background for the heat bar
+    const heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
+    mainGl.fillRect(10, 380, heatBarLength, 10); // TODO: Render background for the heat bar
 
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
@@ -896,7 +896,7 @@
     if (playerIsShooting) {
       shootBullet(player.pos, player.dir, true, 0.1);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
-      gunHeat--;
+      player.gunHeat--;
       soundShoot(0.75);
     }
 
@@ -905,10 +905,10 @@
     shootingFrameTimeout--;
     invisibilityTimeout--;
 
-    if (gunHeat <= 0) gunHeatBlock = true;
-    if (gunHeatBlock && gunHeat >= PLAYER_GUN_HEAT_MAX) gunHeatBlock = false;
+    if (player.gunHeat <= 0) player.gunHeatBlock = true;
+    if (player.gunHeatBlock && player.gunHeat >= PLAYER_GUN_HEAT_MAX) player.gunHeatBlock = false;
 
-    gunHeat = min(gunHeat + PLAYER_GUN_HEAT_RECOVER, PLAYER_GUN_HEAT_MAX);
+    player.gunHeat = min(player.gunHeat + PLAYER_GUN_HEAT_RECOVER, PLAYER_GUN_HEAT_MAX);
 
     bullets = bullets
       .map(b => ({ ...b, lifetime: b.lifetime - 1 }))
