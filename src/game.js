@@ -767,7 +767,7 @@
       if (side === 1 && rayDirY < 0) texX = TEXTURE_SIZE - texX - 1;
 
       let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT; // 0 to 1
-      let lightBumpValue = 0.1;
+      let lightBumpValue = 0.2;
       let shadeFactor = min((((lightScale * 10) | 0) / 10) + lightBumpValue, 1);
 
       for (let y = drawStart; y < drawEnd; y++) {
