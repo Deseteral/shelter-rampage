@@ -310,12 +310,22 @@
 
   makeFonts();
 
-  const drawText = (text, x, y) => {
+  const drawTextBase = (text, x, y, glyps) => {
     text
       .split('')
       .forEach((letter, idx) => {
-        mainGl.drawImage(glyphsPrimary[letter], (x + (idx * (FONT_SIZE - 10))), y);
+        mainGl.drawImage(glyps[letter], (x + (idx * (FONT_SIZE - 10))), y);
       });
+  };
+
+  const drawText = (text, x, y) => {
+    repeat(randomInt(2, 4), () => {
+      const offx = randomInt(-2, 2);
+      const offy = randomInt(-2, 2);
+      drawTextBase(text, x + offx, y + offy, glyphsSecondary);
+    });
+
+    drawTextBase(text, x, y, glyphsPrimary);
   };
   // END Bake font
 
