@@ -37,6 +37,9 @@
   const SHOOTING_FRAME_TIMEOUT_MAX = 7;
   const SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
 
+  const SPECIAL_REQUIRED = 4;
+  const SPECIAL_TIMEOUT_MAX = 30;
+
   const DEFAULT_PLANE = { x: 0.52, y: -0.40 };
   const DEFAULT_PLAYER = () => ({
     dir: { x: 0.61, y: 0.79 },
@@ -71,7 +74,8 @@
     65: 'left',
     68: 'right',
     32: 'shoot',
-    191: 'debug',
+    70: 'special',
+    191: 'debug', // TODO: DEBUG: Remove debug
   };
 
   let keyState = {
@@ -80,7 +84,8 @@
     left: false,
     right: false,
     shoot: false,
-    debug: false,
+    special: false,
+    debug: false, // TODO: DEBUG: Remove debug
     rotate: 0,
   };
 
@@ -138,6 +143,11 @@
   let bullets = [];
   let powerups = [];
   let player = DEFAULT_PLAYER();
+
+  let specialCounter = 0;
+  let specialActive = false;
+  let specialTimeout = SPECIAL_TIMEOUT_MAX;
+
   let plane = { ...DEFAULT_PLANE };
   // END Game objects
 
@@ -499,11 +509,13 @@
       return pos;
     };
 
+    // Place medipacks
     repeat(levelDepth > 3 ? 2 : 1, () => {
       let pos = floorTiles.pop();
       makeMedipack(pos);
     });
 
+    // Place enemies
     repeat(min(20, randomInt(1 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
     repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
 
@@ -512,17 +524,17 @@
   // END Level generator
 
   // TODO: DEBUG: Remove minimap
-  // {
-  //   const minimap = document.createElement('canvas');
-  //   minimap.id = 'minimap';
-  //   minimap.width = 32;
-  //   minimap.height = 32;
-  //   minimap.style.position = 'absolute';
-  //   minimap.style.width = '256px';
-  //   minimap.style['image-rendering'] = 'pixelated';
-  //   document.body.insertBefore(minimap, document.body.firstChild);
-  //   gameData.minimap = minimap;
-  // }
+  {
+    const minimap = document.createElement('canvas');
+    minimap.id = 'minimap';
+    minimap.width = 32;
+    minimap.height = 32;
+    minimap.style.position = 'absolute';
+    minimap.style.width = '256px';
+    minimap.style['image-rendering'] = 'pixelated';
+    document.body.insertBefore(minimap, document.body.firstChild);
+    window.minimap = minimap;
+  }
 
   let run = () => {
     if (keyState.debug) window.DEBUG = true; // TODO: DEBUG: Remove debug
@@ -585,18 +597,18 @@
   // Game scene
   let gameScene = () => {
     // TODO: DEBUG: Remove minimap
-    // const { minimap } = gameData;
-    // const minimapGl = minimap.getContext('2d');
-    // minimapGl.imageSmoothingEnabled = false;
-    // minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
+    const { minimap } = window;
+    const minimapGl = minimap.getContext('2d');
+    minimapGl.imageSmoothingEnabled = false;
+    minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
 
     // Clear offscreen buffer
     gl.fillStyle = 'black';
     gl.fillRect(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
 
     // TODO: DEBUG: Remove minimap
-    // minimapGl.fillStyle = 'black';
-    // minimapGl.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+    minimapGl.fillStyle = 'black';
+    minimapGl.fillRect(0, 0, LEVEL_SIZE, LEVEL_SIZE);
 
     // Update world
     enemies.forEach(e => {
@@ -672,6 +684,8 @@
           e.life -= 15;
           e.hit = true;
 
+          if (e.life <= 0) specialCounter = min(SPECIAL_REQUIRED, specialCounter + 1);
+
           score += 15;
 
           let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
@@ -690,7 +704,7 @@
       });
 
       // Bullet hits the player
-      if (!b.ownerPlayer && b.lifetime > 0 && pointsDistance(b.pos, player.pos) <= 0.5) {
+      if (!specialActive && !b.ownerPlayer && b.lifetime > 0 && pointsDistance(b.pos, player.pos) <= 0.5) {
         player.life -= PLAYER_BULLET_DAMAGE_TAKEN;
       }
     });
@@ -910,7 +924,7 @@
     }
 
     // Render offscreen buffer
-    const playerIsShooting = keyState.shoot && shootingFrameTimeout <= 0 && !player.gunHeatBlock;
+    const playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
     const shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
     const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
@@ -930,6 +944,12 @@
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     const heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
     mainGl.fillRect(10, 380, heatBarLength, 10);
+
+    // Render special
+    mainGl.strokeStyle = colorToString(OBJECT_COLOR);
+    repeat(4, (idx) => mainGl.strokeRect(280 + (idx * 20), 370, 16, 20));
+    mainGl.fillStyle = colorToString(OBJECT_COLOR);
+    repeat(specialCounter, (idx) => mainGl.fillRect(280 + (idx * 20), 370, 16, 20));
 
     // Input processing
     let forwardVector = vecMul(player.dir, PLAYER_MOVE_SPEED);
@@ -960,6 +980,18 @@
       if (checkMapCollision(player.pos.x, d.y)) player.pos.y = d.y;
     }
 
+    if (keyState.special && specialCounter === SPECIAL_REQUIRED) {
+      specialActive = true;
+    }
+
+    if (specialTimeout <= 0 && specialActive) {
+      specialCounter--;
+      specialTimeout = SPECIAL_TIMEOUT_MAX;
+      if (specialCounter <= 0) {
+        specialActive = false;
+      }
+    }
+
     // Rotate the player
     let playerRotateAmount = -keyState.rotate * PLAYER_ROTATE_SPEED * 0.15;
     rotatePlayer(playerRotateAmount);
@@ -968,7 +1000,7 @@
     if (playerIsShooting) {
       shootBullet(player.pos, player.dir, true, 0.1);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
-      player.gunHeat--;
+      if (!specialActive) player.gunHeat--;
       soundShoot(0.75);
     }
 
@@ -976,6 +1008,7 @@
     // TODO: Perhaps I should move this between update and render
     shootingFrameTimeout--;
     invisibilityTimeout--;
+    specialTimeout--;
 
     if (player.gunHeat <= 0) player.gunHeatBlock = true;
     if (player.gunHeatBlock && player.gunHeat >= PLAYER_GUN_HEAT_MAX) player.gunHeatBlock = false;
@@ -1003,18 +1036,18 @@
 
     // TODO: DEBUG: Remove minimap
     // Draw minimap
-    // if (window.DEBUG_minimap) {
-    //   minimapGl.fillStyle = 'white';
-    //   for (let y = 0; y < MAP_SIZE; y++) {
-    //     for (let x = 0; x < MAP_SIZE; x++) {
-    //       if (gameData.map[x][y] !== 0) minimapGl.fillRect(x, y, 1, 1);
-    //     }
-    //   }
-    //   minimapGl.fillStyle = 'yellow';
-    //   enemies.forEach(e => minimapGl.fillRect(e.pos.x | 0, e.pos.y | 0, 1, 1));
-    //   minimapGl.fillStyle = 'red';
-    //   minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
-    // }
+    if (window.DEBUG_minimap) {
+      minimapGl.fillStyle = 'white';
+      for (let y = 0; y < LEVEL_SIZE; y++) {
+        for (let x = 0; x < LEVEL_SIZE; x++) {
+          if (level[x][y] !== 0) minimapGl.fillRect(x, y, 1, 1);
+        }
+      }
+      minimapGl.fillStyle = 'yellow';
+      enemies.forEach(e => minimapGl.fillRect(e.pos.x | 0, e.pos.y | 0, 1, 1));
+      minimapGl.fillStyle = 'red';
+      minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
+    }
   };
   // END Game scene
 
@@ -1025,9 +1058,12 @@
       makeColors();
       makeFonts();
 
-      let hp = player.life;
+      let hp = player.life <= 0 ? 100 : player.life;
       player = DEFAULT_PLAYER();
       player.life = hp;
+
+      specialCounter = 0;
+      specialActive = false;
 
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
