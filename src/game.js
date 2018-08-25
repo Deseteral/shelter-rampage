@@ -476,8 +476,8 @@
       return pos;
     };
 
-    repeat(3, () => makeEnemy('e1', getPos()));
-    repeat(3, () => makeEnemy('e2', getPos()));
+    repeat(min(20, randomInt(1 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
+    repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
 
     return m;
   };
