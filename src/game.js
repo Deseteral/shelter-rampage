@@ -24,8 +24,8 @@
   const PLAYER_MOVE_SPEED = 0.1;
   const PLAYER_ROTATE_SPEED = 0.03;
   const PLAYER_INVISIBILITY_TIMEOUT_MAX = 2 * 60; // TODO: Precalculate that
-  const PLAYER_BULLET_DAMAGE_TAKEN = 2;
-  const PLAYER_MELEE_DAMAGE_TAKEN = 5;
+  const PLAYER_BULLET_DAMAGE_TAKEN = 5;
+  const PLAYER_MELEE_DAMAGE_TAKEN = 8;
   const PLAYER_GUN_HEAT_MAX = 10;
   const PLAYER_GUN_HEAT_RECOVER = 0.1;
 
@@ -518,7 +518,7 @@
     };
 
     // Place medipacks
-    repeat(levelDepth > 3 ? 2 : 1, () => {
+    repeat(levelDepth > 3 ? 1 : 0, () => {
       let pos = floorTiles.pop();
       makeMedipack(pos);
     });
@@ -692,9 +692,9 @@
           e.life -= 15;
           e.hit = true;
 
-          if (e.life <= 0) specialCounter = min(SPECIAL_REQUIRED, specialCounter + 1);
+          if (e.life <= 0 && !specialActive) specialCounter = min(SPECIAL_REQUIRED, specialCounter + 1);
 
-          score += (101 - player.life) * levelDepth;
+          score += (((101 - player.life) * levelDepth) * (specialActive ? 2 : 1));
 
           let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
           let canRecoil = true;
@@ -1027,7 +1027,7 @@
       .filter(b => b.lifetime > 0);
 
     enemies.forEach(e => {
-      if (e.life <= 0 && randomInt(0, 100) < 10) makeMedipack(e.pos);
+      if (e.life <= 0 && randomInt(0, 100) < 5) makeMedipack(e.pos);
     });
     enemies = enemies.filter(e => e.life > 0);
 
@@ -1076,9 +1076,6 @@
       level = generateLevel();
       levelDepth++;
 
-      const hs = localStorage.getItem('hs');
-      if (score > hs || !hs) localStorage.setItem('hs', score);
-
       gameInitialized = true;
     }
 
@@ -1105,6 +1102,13 @@
 
   // Game over scene
   let gameOverScene = () => {
+    if (!gameInitialized) {
+      const hs = localStorage.getItem('hs');
+      if (score > hs || !hs) localStorage.setItem('hs', score);
+
+      gameInitialized = true;
+    }
+
     drawText('Game over', 120, 10);
     drawText(`Your score is ${score}`, 10, 100);
 
@@ -1119,6 +1123,7 @@
         score = 0;
         levelDepth = 0;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
+        gameInitialized = false;
         currentScene = transitionScene(lobbyScene);
       }
     }
