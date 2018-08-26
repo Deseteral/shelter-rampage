@@ -1,7 +1,6 @@
 // TODO: Test on Windows 10
 // TODO: Make all consts - lets
 // TODO: Remove all DEBUG stuff
-// TODO: Find more vector operations to replace with vec* functions
 // TODO: Replace true with 1, false with 0
 // TODO: Replace <= with < etc.
 // TODO: Replace empty arrow fn arg () with _     `() =>` to `_ =>`
@@ -16,50 +15,50 @@
     sin, cos, floor, random, sqrt, ceil, min, max, abs,
   } = Math;
 
-  const TEXTURE_SIZE = 16;
-  const BUFFER_WIDTH = 90;
-  const BUFFER_HEIGHT = 100;
-  const LEVEL_SIZE = 32;
+  let TEXTURE_SIZE = 16;
+  let BUFFER_WIDTH = 90;
+  let BUFFER_HEIGHT = 100;
+  let LEVEL_SIZE = 32;
 
-  const PLAYER_MOVE_SPEED = 0.1;
-  const PLAYER_ROTATE_SPEED = 0.03;
-  const PLAYER_INVISIBILITY_TIMEOUT_MAX = 120;
-  const PLAYER_BULLET_DAMAGE_TAKEN = 5;
-  const PLAYER_MELEE_DAMAGE_TAKEN = 8;
-  const PLAYER_GUN_HEAT_MAX = 10;
-  const PLAYER_GUN_HEAT_RECOVER = 0.1;
+  let PLAYER_MOVE_SPEED = 0.1;
+  let PLAYER_ROTATE_SPEED = 0.03;
+  let PLAYER_INVISIBILITY_TIMEOUT_MAX = 120;
+  let PLAYER_BULLET_DAMAGE_TAKEN = 5;
+  let PLAYER_MELEE_DAMAGE_TAKEN = 8;
+  let PLAYER_GUN_HEAT_MAX = 10;
+  let PLAYER_GUN_HEAT_RECOVER = 0.1;
 
-  const E1_MOVE_SPEED = 0.02; // e1 is shooting enemy
-  const E2_MOVE_SPEED = 0.12; // e2 is melee enemy
+  let E1_MOVE_SPEED = 0.02; // e1 is shooting enemy
+  let E2_MOVE_SPEED = 0.12; // e2 is melee enemy
 
-  const BULLET_SPEED = 0.5;
-  const BULLET_LIFETIME_FRAMES = 180;
-  const SHOOTING_FRAME_TIMEOUT_MAX = 7;
-  const SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
+  let BULLET_SPEED = 0.5;
+  let BULLET_LIFETIME_FRAMES = 180;
+  let SHOOTING_FRAME_TIMEOUT_MAX = 7;
+  let SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
 
-  const SPECIAL_REQUIRED = 4;
-  const SPECIAL_TIMEOUT_MAX = 30;
+  let SPECIAL_REQUIRED = 4;
+  let SPECIAL_TIMEOUT_MAX = 30;
 
-  const DEFAULT_PLANE = { x: 0.52, y: -0.40 };
-  const DEFAULT_PLAYER = () => ({
+  let DEFAULT_PLANE = { x: 0.52, y: -0.40 };
+  let DEFAULT_PLAYER = () => ({
     dir: { x: 0.61, y: 0.79 },
     life: 100,
     gunHeat: PLAYER_GUN_HEAT_MAX,
     gunHeatBlock: false,
   });
 
-  const LOBBY_TIMEOUT_MAX = 100;
+  let LOBBY_TIMEOUT_MAX = 100;
   // END Constant values
 
   // Textures
-  const textureUnpack = (hexArray) => hexArray.map(h => parseInt(h, 16).toString(2).substr(1).split(''));
+  let textureUnpack = (hexArray) => hexArray.map(h => parseInt(h, 16).toString(2).substr(1).split(''));
 
-  const WALL_TEX = [
+  let WALL_TEX = [
     textureUnpack(['10000', '11ff8', '13ffc', '17ffe', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '1700e', '17ffe', '13ffc', '11ff8', '10000']),
     textureUnpack(['10000', '1011e', '111b7', '13d27', '11c3f', '10e3f', '1661e', '13000', '11000', '10000', '17ffe', '1c7ff', '1c7ff', '1ffff', '17ffe', '10000']),
     textureUnpack(['1383c', '17c7e', '14c4e', '14c4e', '14c7e', '17c7e', '17c7e', '17c7e', '17c3c', '17c00', '17c3c', '17c7e', '17c6e', '17c5e', '17c7e', '1383c']),
   ];
-  const SPRITE_TEX = {
+  let SPRITE_TEX = {
     e1: textureUnpack(['10000', '10000', '103c0', '103c0', '10ff0', '10ff0', '10c30', '10c30', '10ff0', '10ff0', '130cc', '130cc', '133cc', '133cc', '1c333', '1c333']),
     e2: textureUnpack(['10000', '10000', '10000', '10000', '10c30', '10c30', '13ffc', '13ffc', '103c0', '103c0', '10ff0', '10ff0', '10000', '10000', '10000', '10000']),
     b: textureUnpack(['10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '10000', '103c0', '103c0', '103c0', '103c0', '103c0', '103c0']),
@@ -89,7 +88,7 @@
     rotate: 0,
   };
 
-  const event = document.addEventListener;
+  let event = document.addEventListener;
   event('mousemove', e => {
     keyState.rotate = e.movementX;
   });
@@ -120,9 +119,9 @@
   mainGl.imageSmoothingEnabled = false;
   mainCanvas.onclick = () => mainCanvas.requestPointerLock();
 
-  const offscreen = document.createElement('canvas');
+  let offscreen = document.createElement('canvas');
   offscreen.width = offscreen.height = BUFFER_WIDTH;
-  const gl = offscreen.getContext('2d');
+  let gl = offscreen.getContext('2d');
   // END Prelude
 
   // Game objects
@@ -151,34 +150,34 @@
   // END Game objects
 
   // Utility functions
-  const repeat = (times, cb, start = 0) => {
+  let repeat = (times, cb, start = 0) => {
     for (let i = start; i < times; i++) cb(i);
   };
 
-  const range = (from, to) => {
-    const arr = [];
+  let range = (from, to) => {
+    let arr = [];
     for (let i = from; i <= to; i++) arr.push(i);
     return arr;
   };
 
-  const squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
-  const shuffleArray = (array) => {
+  let squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
+  let shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
-      const j = floor(random() * (i + 1));
+      let j = floor(random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
   };
 
-  const checkMapCollision = (x, y) => level[x | 0][y | 0] === 0;
+  let checkMapCollision = (x, y) => level[x | 0][y | 0] === 0;
 
-  const pointsDistance = (a, b) => sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
-  const vecAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
-  const vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
-  const vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
-  const vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
-  const vecLen = (a) => sqrt((a.x ** 2) + (a.y ** 2));
-  const vecNorm = (a) => vecDiv(a, vecLen(a));
-  const vecRotate = (a, rad) => {
+  let pointsDistance = (a, b) => sqrt(((b.x - a.x) ** 2) + ((b.y - a.y) ** 2));
+  let vecAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+  let vecMul = (a, scal) => ({ x: a.x * scal, y: a.y * scal });
+  let vecSub = (a, b) => vecAdd(a, vecMul(b, -1));
+  let vecDiv = (a, scal) => ({ x: a.x / scal, y: a.y / scal });
+  let vecLen = (a) => sqrt((a.x ** 2) + (a.y ** 2));
+  let vecNorm = (a) => vecDiv(a, vecLen(a));
+  let vecRotate = (a, rad) => {
     let cs = cos(rad);
     let sn = sin(rad);
     return {
@@ -186,14 +185,14 @@
       y: (a.x * sn) + (a.y * cs),
     };
   };
-  const dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
+  let dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
 
-  const colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
-  const colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
-  const colorInv = (c) => ({ r: -c.r + 255, g: -c.g + 255, b: -c.b + 255 });
-  const colorDarkenOnce = (c) => colorMul(c, 0.5);
+  let colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
+  let colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
+  let colorInv = (c) => ({ r: -c.r + 255, g: -c.g + 255, b: -c.b + 255 });
+  let colorDarkenOnce = (c) => colorMul(c, 0.5);
 
-  const strokeRect = (x, y, w, h, rgl) => {
+  let strokeRect = (x, y, w, h, rgl) => {
     rgl.fillRect(x, y, w, 1);
     rgl.fillRect(x, y + h, w, 1);
 
@@ -201,16 +200,16 @@
     rgl.fillRect(x + w, y, 1, h);
   };
 
-  const randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
-  const randomInt = (min, max) => { // eslint-disable-line no-shadow
+  let randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
+  let randomInt = (min, max) => { // eslint-disable-line no-shadow
     min = ceil(min);
     max = floor(max);
     return floor(random() * ((max - min) + 1)) + min;
   };
-  const randomDir = () => vecNorm({ x: randomFloat(-1, 1), y: randomFloat(-1, 1) });
+  let randomDir = () => vecNorm({ x: randomFloat(-1, 1), y: randomFloat(-1, 1) });
 
-  const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
-  const canEnemySeePlayer = (enemy, isPlayerShooting) => {
+  let enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
+  let canEnemySeePlayer = (enemy, isPlayerShooting) => {
     if (!isPlayerShooting && (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10)) return false;
 
     let dirVec = dirVecPoints(enemy.pos, player.pos);
@@ -230,16 +229,16 @@
     return hit;
   };
 
-  const rotatePlayer = (amount) => {
-    const oldDirX = player.dir.x;
+  let rotatePlayer = (amount) => {
+    let oldDirX = player.dir.x;
     player.dir.x = (player.dir.x * cos(amount)) - (player.dir.y * sin(amount));
     player.dir.y = (oldDirX * sin(amount)) + (player.dir.y * cos(amount));
-    const oldPlaneX = plane.x;
+    let oldPlaneX = plane.x;
     plane.x = (plane.x * cos(amount)) - (plane.y * sin(amount));
     plane.y = (oldPlaneX * sin(amount)) + (plane.y * cos(amount));
   };
 
-  const shootBullet = (pos, dir, ownerPlayer, spread) => {
+  let shootBullet = (pos, dir, ownerPlayer, spread) => {
     bullets.push({
       sprite: 'b',
       pos: { ...pos },
@@ -249,7 +248,7 @@
     });
   };
 
-  const makeEnemy = (type, pos) => {
+  let makeEnemy = (type, pos) => {
     enemies.push({
       sprite: type,
       pos,
@@ -260,16 +259,16 @@
     });
   };
 
-  const makeMedipack = (pos) => {
+  let makeMedipack = (pos) => {
     powerups.push({
       sprite: 'm',
       pos,
     });
   };
 
-  const soundShoot = volume => {
-    const oscillatorNode = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  let soundShoot = volume => {
+    let oscillatorNode = audioContext.createOscillator();
+    let gainNode = audioContext.createGain();
 
     oscillatorNode.type = 'triangle';
     oscillatorNode.frequency.value = randomInt(90, 92);
@@ -282,11 +281,11 @@
     oscillatorNode.start();
   };
 
-  // const soundE2 = distance => {
-  //   const oscillatorNode = audioContext.createOscillator();
-  //   const gainNode = audioContext.createGain();
+  // let soundE2 = distance => {
+  //   let oscillatorNode = audioContext.createOscillator();
+  //   let gainNode = audioContext.createGain();
 
-  //   const distanceScale = ((1 / distance) * 5);
+  //   let distanceScale = ((1 / distance) * 5);
 
   //   console.log(distanceScale);
 
@@ -306,7 +305,7 @@
   let ENV_COLOR;
   let OBJECT_COLOR;
 
-  const makeColors = () => {
+  let makeColors = () => {
     ENV_COLOR = { r: randomInt(30, 255), g: randomInt(30, 255), b: randomInt(30, 255) };
     OBJECT_COLOR = colorInv(ENV_COLOR);
   };
@@ -315,18 +314,18 @@
   // END Colors
 
   // Bake font
-  const FONT_SIZE = 24;
-  const FONT_GLYPH_SIZE = 48;
-  const glyphsPrimary = {};
-  const glyphsSecondary = {};
+  let FONT_SIZE = 24;
+  let FONT_GLYPH_SIZE = 48;
+  let glyphsPrimary = {};
+  let glyphsSecondary = {};
 
-  const bakeFont = (color, glyphs) => {
+  let bakeFont = (color, glyphs) => {
     range(32, 126).map(a => String.fromCharCode(a))
       .forEach((letter) => {
-        const c = document.createElement('canvas');
+        let c = document.createElement('canvas');
         c.width = FONT_GLYPH_SIZE;
         c.height = FONT_GLYPH_SIZE;
-        const fontGl = c.getContext('2d');
+        let fontGl = c.getContext('2d');
 
         fontGl.font = `${FONT_SIZE}px monospace`;
 
@@ -334,12 +333,12 @@
         fontGl.fillText(letter, 0, FONT_SIZE);
 
         // Clear antialiasing
-        const pixels = fontGl.getImageData(0, 0, FONT_GLYPH_SIZE, FONT_GLYPH_SIZE).data;
+        let pixels = fontGl.getImageData(0, 0, FONT_GLYPH_SIZE, FONT_GLYPH_SIZE).data;
         for (let i = 0; i < pixels.length; i += 4) {
           if (pixels[i] !== 0 || pixels[i + 1] !== 0 || pixels[i + 2] !== 0) {
-            const idx = (i / 4) | 0;
-            const x = (idx % FONT_GLYPH_SIZE) | 0;
-            const y = (idx / FONT_GLYPH_SIZE) | 0;
+            let idx = (i / 4) | 0;
+            let x = (idx % FONT_GLYPH_SIZE) | 0;
+            let y = (idx / FONT_GLYPH_SIZE) | 0;
             fontGl.fillRect(x, y, 1, 1);
           }
         }
@@ -348,23 +347,23 @@
       });
   };
 
-  const makeFonts = () => {
+  let makeFonts = () => {
     bakeFont(colorToString(ENV_COLOR), glyphsPrimary);
     bakeFont(colorToString(OBJECT_COLOR), glyphsSecondary);
   };
 
   makeFonts();
 
-  const drawTextBase = (text, x, y, glyps) => {
+  let drawTextBase = (text, x, y, glyps) => {
     text.split('').forEach((letter, idx) => {
       mainGl.drawImage(glyps[letter], (x + (idx * (FONT_SIZE - 10))), y);
     });
   };
 
-  const drawText = (text, x, y) => {
+  let drawText = (text, x, y) => {
     repeat(randomInt(2, 4), () => {
-      const offx = randomInt(-2, 2);
-      const offy = randomInt(-2, 2);
+      let offx = randomInt(-2, 2);
+      let offy = randomInt(-2, 2);
       drawTextBase(text, x + offx, y + offy, glyphsSecondary);
     });
 
@@ -373,22 +372,22 @@
   // END Bake font
 
   // Level generator
-  const generateLevel = () => {
+  let generateLevel = () => {
     // 1. Pick middle tile
     // 2. If wall -> regenerate map
     // 3. Make flood fill
     // 4. If tile was not marked as active -> set to wall
     // 5. Place enemies
     // 6. Place the player
-    const celluarAutomata = () => {
+    let celluarAutomata = () => {
       let m = squareArray(LEVEL_SIZE);
 
-      const numberOfSteps = 10;
-      const birthLimit = 5;
-      const deathLimit = 4;
-      const chanceToStartAlive = 0.49;
+      let numberOfSteps = 10;
+      let birthLimit = 5;
+      let deathLimit = 4;
+      let chanceToStartAlive = 0.49;
 
-      const countNeighbours = (x, y) => {
+      let countNeighbours = (x, y) => {
         let count = 0;
         [-1, 0, 1].forEach(i => {
           [-1, 0, 1].forEach(j => {
@@ -441,14 +440,14 @@
       return m;
     };
 
-    const removeClosedRooms = m => {
-      const floodMap = squareArray(LEVEL_SIZE);
-      const queue = [];
+    let removeClosedRooms = m => {
+      let floodMap = squareArray(LEVEL_SIZE);
+      let queue = [];
 
       floodMap[LEVEL_SIZE / 2][LEVEL_SIZE / 2] = 1;
       queue.push({ x: LEVEL_SIZE / 2, y: LEVEL_SIZE / 2 });
 
-      const markNeighbours = ({ x, y }) => {
+      let markNeighbours = ({ x, y }) => {
         [-1, 0, 1].forEach(i => {
           [-1, 0, 1].forEach(j => {
             if (i !== 0 && j !== 0) return;
@@ -508,7 +507,7 @@
 
     shuffleArray(floorTiles);
 
-    const getPos = () => {
+    let getPos = () => {
       let pos = floorTiles.pop();
       while (pointsDistance(pos, player.pos) <= 15) pos = floorTiles.pop();
       return pos;
@@ -530,7 +529,7 @@
 
   // TODO: DEBUG: Remove minimap
   {
-    const minimap = document.createElement('canvas');
+    let minimap = document.createElement('canvas');
     minimap.id = 'minimap';
     minimap.width = 32;
     minimap.height = 32;
@@ -552,10 +551,10 @@
     currentScene();
 
     if (window.DEBUG) { // TODO: DEBUG: Remove color counting
-      const dict = {};
-      const pixels = mainGl.getImageData(0, 0, 360, 400).data;
+      let dict = {};
+      let pixels = mainGl.getImageData(0, 0, 360, 400).data;
       for (let i = 0; i < pixels.length; i += 4) {
-        const key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
+        let key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
         if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
         dict[key] = true;
       }
@@ -573,8 +572,8 @@
   };
 
   // Transition state
-  const TRANSITION_STEP = 5;
-  const transitionScene = (nextScene) => () => {
+  let TRANSITION_STEP = 5;
+  let transitionScene = (nextScene) => () => {
     transition = true;
 
     mainGl.fillStyle = colorToString(ENV_COLOR);
@@ -602,8 +601,8 @@
   // Game scene
   let gameScene = () => {
     // TODO: DEBUG: Remove minimap
-    const { minimap } = window;
-    const minimapGl = minimap.getContext('2d');
+    let { minimap } = window;
+    let minimapGl = minimap.getContext('2d');
     minimapGl.imageSmoothingEnabled = false;
     minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
 
@@ -616,7 +615,7 @@
     minimapGl.fillRect(0, 0, LEVEL_SIZE, LEVEL_SIZE);
 
     // Update world
-    const playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
+    let playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
 
     enemies.forEach(e => {
       e.hit = false; // Reset
@@ -728,13 +727,13 @@
     powerups = powerups.filter(pu => !pu.used);
 
     // Render world
-    const zBuffer = [];
-    const spriteOrder = [];
+    let zBuffer = [];
+    let spriteOrder = [];
 
     for (let x = 0; x < BUFFER_WIDTH; x++) {
-      const cameraX = ((2 * x) / BUFFER_WIDTH) - 1;
-      const rayDirX = player.dir.x + (plane.x * cameraX);
-      const rayDirY = player.dir.y + (plane.y * cameraX);
+      let cameraX = ((2 * x) / BUFFER_WIDTH) - 1;
+      let rayDirX = player.dir.x + (plane.x * cameraX);
+      let rayDirY = player.dir.y + (plane.y * cameraX);
 
       let mapX = player.pos.x | 0;
       let mapY = player.pos.y | 0;
@@ -742,8 +741,8 @@
       let sideDistX;
       let sideDistY;
 
-      const deltaDistX = abs(1 / rayDirX);
-      const deltaDistY = abs(1 / rayDirY);
+      let deltaDistX = abs(1 / rayDirX);
+      let deltaDistY = abs(1 / rayDirY);
       let perpWallDist;
 
       let stepX;
@@ -790,7 +789,7 @@
         perpWallDist = ((mapY - player.pos.y) + ((1 - stepY) / 2)) / rayDirY;
       }
 
-      const lineHeight = (BUFFER_HEIGHT / perpWallDist) | 0;
+      let lineHeight = (BUFFER_HEIGHT / perpWallDist) | 0;
 
       let drawStart = (-lineHeight / 2) + (BUFFER_HEIGHT / 2);
       if (drawStart < 0) {
@@ -824,7 +823,7 @@
         let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128);
         let texY = (((d * TEXTURE_SIZE) / lineHeight) / 256) | 0;
 
-        const wallTexture = WALL_TEX[level[mapX][mapY] - 1];
+        let wallTexture = WALL_TEX[level[mapX][mapY] - 1];
         if (!wallTexture[texY]) continue;
         let textureShade = min(1, (wallTexture[texY][texX] + 0.5));
 
@@ -837,7 +836,7 @@
     }
 
     // Sprite casting
-    const sprites = [].concat(enemies, bullets, powerups);
+    let sprites = [].concat(enemies, bullets, powerups);
 
     for (let i = 0; i < sprites.length; i++) {
       spriteOrder[i] = {
@@ -862,9 +861,9 @@
       let spriteScreenX = ((BUFFER_WIDTH / 2) * (1 + (transformX / transformY))) | 0;
 
       // Sprite scaling
-      const uDiv = 2;
-      const vDiv = 2;
-      const vMove = TEXTURE_SIZE;
+      let uDiv = 2;
+      let vDiv = 2;
+      let vMove = TEXTURE_SIZE;
       let vMoveScreen = (vMove / transformY) | 0;
 
       let spriteHeight = (abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0;
@@ -904,8 +903,8 @@
     }
 
     // Render offscreen buffer
-    const shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
-    const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
+    let shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
+    let shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
     mainGl.drawImage(offscreen, shakeX, shakeY, 360, 400);
     // END Render offscreen buffer
@@ -914,14 +913,14 @@
     mainGl.fillStyle = colorToString(colorDarkenOnce(OBJECT_COLOR));
     mainGl.fillRect(10, 10, 100, 10);
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
-    const hpBarLength = ((player.life / 100) * 100) | 0;
+    let hpBarLength = ((player.life / 100) * 100) | 0;
     mainGl.fillRect(10, 10, hpBarLength, 10);
 
     // Render gun heat bar
     mainGl.fillStyle = colorToString(colorDarkenOnce(OBJECT_COLOR));
     mainGl.fillRect(10, 380, 50, 10);
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
-    const heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
+    let heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
     mainGl.fillRect(10, 380, heatBarLength, 10);
 
     // Render special bar
@@ -1073,7 +1072,7 @@
   // Game over scene
   let gameOverScene = () => {
     if (!gameInitialized) {
-      const hs = localStorage.getItem('hs');
+      let hs = localStorage.getItem('hs');
       if (score > hs || !hs) localStorage.setItem('hs', score);
 
       gameInitialized = true;
@@ -1082,7 +1081,7 @@
     drawText('Game over', 120, 10);
     drawText(`Your score is ${score}`, 10, 100);
 
-    const clearedFloors = (levelDepth - 1);
+    let clearedFloors = (levelDepth - 1);
     drawText(`You've cleared ${clearedFloors} floor${clearedFloors === 1 ? '' : 's'}`, 10, 130);
     drawText(`High score: ${localStorage.getItem('hs')}`, 10, 190);
 
