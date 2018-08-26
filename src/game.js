@@ -211,8 +211,8 @@
   const randomDir = () => vecNorm({ x: randomFloat(-1, 1), y: randomFloat(-1, 1) });
 
   const enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
-  const canEnemySeePlayer = (enemy) => {
-    if (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10) return false;
+  const canEnemySeePlayer = (enemy, isPlayerShooting) => {
+    if (!isPlayerShooting && (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10)) return false;
 
     let dirVec = dirVecPoints(enemy.pos, player.pos);
     let castPos = { ...enemy.pos };
@@ -619,6 +619,8 @@
     minimapGl.fillRect(0, 0, LEVEL_SIZE, LEVEL_SIZE);
 
     // Update world
+    const playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
+
     enemies.forEach(e => {
       e.hit = false; // Reset
       e.shootingFrameTimeout--;
@@ -636,7 +638,7 @@
         if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
       });
 
-      if (canEnemySeePlayer(e, player)) {
+      if (canEnemySeePlayer(e, playerIsShooting)) {
         let dirToPlayer = dirVecPoints(e.pos, player.pos);
         e.dir = dirToPlayer;
 
@@ -932,7 +934,6 @@
     }
 
     // Render offscreen buffer
-    const playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
     const shakeX = playerIsShooting ? randomInt(-2, 2) : 0;
     const shakeY = playerIsShooting ? randomInt(-2, 2) : 0;
 
