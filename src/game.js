@@ -610,7 +610,7 @@
         progressOscillatorNode.stop();
         transitionSoundStarted = 0;
         currentScene = nextScene;
-      }, 500);
+      }, 300);
     }
   };
   // END Transition state
