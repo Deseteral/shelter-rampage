@@ -1,10 +1,5 @@
 // TODO: Test on Windows 10
 // TODO: Remove all DEBUG stuff
-// TODO: Replace 1 with 1, 0 with 0
-// TODO: Replace <= with < etc.
-// TODO: Replace empty arrow fn arg () with _     `() =>` to `_ =>`
-// TODO: Fix license and all that
-// TODO: Transition between screens
 // TODO: Add cool screenshot to the readme.md
 // TODO: Host the submission on the github page
 
