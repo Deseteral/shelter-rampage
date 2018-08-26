@@ -45,7 +45,7 @@
   // END Constant values
 
   // Textures
-  console.log('Test');
+  console.log('Test1');
   let textureUnpack = (hexArray) => hexArray.map(h => parseInt(h, 16).toString(2).substr(1).split(''));
 
   let WALL_TEX = [
