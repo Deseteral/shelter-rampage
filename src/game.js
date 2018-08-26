@@ -1,6 +1,6 @@
 // TODO: Test on Windows 10
 // TODO: Remove all DEBUG stuff
-// TODO: Replace true with 1, false with 0
+// TODO: Replace 1 with 1, 0 with 0
 // TODO: Replace <= with < etc.
 // TODO: Replace empty arrow fn arg () with _     `() =>` to `_ =>`
 // TODO: Fix license and all that
@@ -43,7 +43,7 @@
     dir: { x: 0.61, y: 0.79 },
     life: 100,
     gunHeat: PLAYER_GUN_HEAT_MAX,
-    gunHeatBlock: false,
+    gunHeatBlock: 0,
   });
 
   let LOBBY_TIMEOUT_MAX = 100;
@@ -77,13 +77,13 @@
   };
 
   let keyState = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    shoot: false,
-    special: false,
-    debug: false, // TODO: DEBUG: Remove debug
+    up: 0,
+    down: 0,
+    left: 0,
+    right: 0,
+    shoot: 0,
+    special: 0,
+    debug: 0, // TODO: DEBUG: Remove debug
     rotate: 0,
   };
 
@@ -97,15 +97,15 @@
   });
 
   event('mouseup', () => {
-    keyState.shoot = false;
+    keyState.shoot = 0;
   });
 
   event('keydown', e => {
-    keyState[KEY_CODES[e.keyCode]] = true;
+    keyState[KEY_CODES[e.keyCode]] = 1;
   });
 
   event('keyup', e => {
-    keyState[KEY_CODES[e.keyCode]] = false;
+    keyState[KEY_CODES[e.keyCode]] = 0;
   });
   // END Keyboard state
 
@@ -115,7 +115,7 @@
   let mainCanvas = document.getElementById('c');
 
   let mainGl = mainCanvas.getContext('2d');
-  mainGl.imageSmoothingEnabled = false;
+  mainGl.imageSmoothingEnabled = 0;
   mainCanvas.onclick = () => mainCanvas.requestPointerLock();
 
   let offscreen = document.createElement('canvas');
@@ -127,10 +127,10 @@
   let shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
   let invisibilityTimeout = PLAYER_INVISIBILITY_TIMEOUT_MAX;
 
-  let gameInitialized = false;
+  let gameInitialized = 0;
   let lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
-  let transition = false;
+  let transition = 0;
   let transitionProgress = 0;
 
   let level = null;
@@ -142,7 +142,7 @@
   let player = DEFAULT_PLAYER();
 
   let specialCounter = 0;
-  let specialActive = false;
+  let specialActive = 0;
   let specialTimeout = SPECIAL_TIMEOUT_MAX;
 
   let plane = { ...DEFAULT_PLANE };
@@ -209,14 +209,14 @@
 
   let enemyDirTimer = () => randomInt(60 * 2, 60 * 6);
   let canEnemySeePlayer = (enemy, isPlayerShooting) => {
-    if (!isPlayerShooting && (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10)) return false;
+    if (!isPlayerShooting && (enemy.blind || invisibilityTimeout > 0 || pointsDistance(enemy.pos, player.pos) > 10)) return 0;
 
     let dirVec = dirVecPoints(enemy.pos, player.pos);
     let castPos = { ...enemy.pos };
-    let hit = false;
-    while (true) { // eslint-disable-line no-constant-condition
+    let hit = 0;
+    while (1) { // eslint-disable-line no-constant-condition
       if (pointsDistance(castPos, player.pos) <= 0.5) {
-        hit = true;
+        hit = 1;
         break;
       }
 
@@ -489,14 +489,14 @@
     });
 
     let floorTiles = [];
-    let playerPlaced = false;
+    let playerPlaced = 0;
 
     repeat(LEVEL_SIZE, (y) => {
       repeat(LEVEL_SIZE, (x) => {
         if (m[x][y] === 0) {
           if (!playerPlaced) {
             player.pos = { x: x + 0.1, y: y + 0.1 };
-            playerPlaced = true;
+            playerPlaced = 1;
           } else {
             floorTiles.push({ x, y });
           }
@@ -540,7 +540,7 @@
   }
 
   let run = () => {
-    if (keyState.debug) window.DEBUG = true; // TODO: DEBUG: Remove debug
+    if (keyState.debug) window.DEBUG = 1; // TODO: DEBUG: Remove debug
 
     if (!transition) {
       mainGl.fillStyle = 'black';
@@ -555,7 +555,7 @@
       for (let i = 0; i < pixels.length; i += 4) {
         let key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
         if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
-        dict[key] = true;
+        dict[key] = 1;
       }
 
       let colorCount = Object.keys(dict).length;
@@ -565,7 +565,7 @@
 
     keyState.rotate = 0;
 
-    window.DEBUG = false; // TODO: DEBUG: Remove debug
+    window.DEBUG = 0; // TODO: DEBUG: Remove debug
 
     window.requestAnimationFrame(run);
   };
@@ -573,7 +573,7 @@
   // Transition state
   let TRANSITION_STEP = 5;
   let transitionScene = (nextScene) => () => {
-    transition = true;
+    transition = 1;
 
     mainGl.fillStyle = colorToString(ENV_COLOR);
 
@@ -589,7 +589,7 @@
 
     if (transitionProgress > 360) {
       setTimeout(() => {
-        transition = false;
+        transition = 0;
         transitionProgress = 0;
         currentScene = nextScene;
       }, 500);
@@ -602,7 +602,7 @@
     // TODO: DEBUG: Remove minimap
     let { minimap } = window;
     let minimapGl = minimap.getContext('2d');
-    minimapGl.imageSmoothingEnabled = false;
+    minimapGl.imageSmoothingEnabled = 0;
     minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
 
     // Clear offscreen buffer
@@ -617,7 +617,7 @@
     let playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
 
     enemies.forEach(e => {
-      e.hit = false; // Reset
+      e.hit = 0; // Reset
       e.shootingFrameTimeout--;
 
       e.changeDirTimer--;
@@ -644,7 +644,7 @@
           }
 
           if (e.shootingFrameTimeout <= 0) {
-            shootBullet(e.pos, dirToPlayer, false, 0.2);
+            shootBullet(e.pos, dirToPlayer, 0, 0.2);
             e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
             soundShoot(1 / max(distanceEnemyToPlayer, 1));
           }
@@ -656,8 +656,8 @@
             e.life = 0;
           } else {
             e.dir = vecMul(e.dir, -1);
-            e.blind = true;
-            setTimeout(() => { e.blind = false; }, 5000);
+            e.blind = 1;
+            setTimeout(() => { e.blind = 0; }, 5000);
           }
           player.life -= PLAYER_MELEE_DAMAGE_TAKEN;
         }
@@ -687,20 +687,20 @@
         // Bullet hits enemy
         if (b.ownerPlayer && pointsDistance(b.pos, e.pos) < 0.5) {
           e.life -= 15;
-          e.hit = true;
+          e.hit = 1;
 
           if (e.life <= 0 && !specialActive) specialCounter = min(SPECIAL_REQUIRED, specialCounter + 1);
 
           score += (((101 - player.life) * levelDepth) * (specialActive ? 2 : 1));
 
           let dp = vecSub(e.pos, vecMul(b.dir, -0.4));
-          let canRecoil = true;
+          let canRecoil = 1;
           enemies.forEach(ee => {
             if (e === ee) return;
-            if (pointsDistance(dp, ee.pos) <= 0.5) canRecoil = false;
+            if (pointsDistance(dp, ee.pos) <= 0.5) canRecoil = 0;
           });
 
-          if (!checkMapCollision(dp.x, dp.y)) canRecoil = false;
+          if (!checkMapCollision(dp.x, dp.y)) canRecoil = 0;
 
           if (canRecoil) e.pos = dp;
 
@@ -718,7 +718,7 @@
       if (pointsDistance(pu.pos, player.pos) <= 0.5) {
         if (pu.sprite === 'm') {
           player.life = 100;
-          pu.used = true;
+          pu.used = 1;
         }
       }
     });
@@ -747,7 +747,7 @@
       let stepX;
       let stepY;
 
-      let hit = false;
+      let hit = 0;
       let side;
 
       if (rayDirX < 0) {
@@ -778,7 +778,7 @@
         }
 
         if (level[mapX][mapY] > 0) {
-          hit = true;
+          hit = 1;
         }
       }
 
@@ -957,14 +957,14 @@
     }
 
     if (keyState.special && specialCounter === SPECIAL_REQUIRED) {
-      specialActive = true;
+      specialActive = 1;
     }
 
     if (specialTimeout <= 0 && specialActive) {
       specialCounter--;
       specialTimeout = SPECIAL_TIMEOUT_MAX;
       if (specialCounter <= 0) {
-        specialActive = false;
+        specialActive = 0;
       }
     }
 
@@ -974,7 +974,7 @@
 
     // Player shooting
     if (playerIsShooting) {
-      shootBullet(player.pos, player.dir, true, 0.1);
+      shootBullet(player.pos, player.dir, 1, 0.1);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
       if (!specialActive) player.gunHeat--;
       soundShoot(0.75);
@@ -985,8 +985,8 @@
     invisibilityTimeout--;
     specialTimeout--;
 
-    if (player.gunHeat <= 0) player.gunHeatBlock = true;
-    if (player.gunHeatBlock && player.gunHeat >= PLAYER_GUN_HEAT_MAX) player.gunHeatBlock = false;
+    if (player.gunHeat <= 0) player.gunHeatBlock = 1;
+    if (player.gunHeatBlock && player.gunHeat >= PLAYER_GUN_HEAT_MAX) player.gunHeatBlock = 0;
 
     player.gunHeat = min(player.gunHeat + PLAYER_GUN_HEAT_RECOVER, PLAYER_GUN_HEAT_MAX);
 
@@ -1038,13 +1038,13 @@
       player.life = hp;
 
       specialCounter = 0;
-      specialActive = false;
+      specialActive = 0;
 
       plane = { ...DEFAULT_PLANE };
       level = generateLevel();
       levelDepth++;
 
-      gameInitialized = true;
+      gameInitialized = 1;
     }
 
     // Rendering score
@@ -1057,7 +1057,7 @@
       drawText('Press FIRE to continue', 10, 360);
 
       if (keyState.shoot) {
-        gameInitialized = false;
+        gameInitialized = 0;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
         currentScene = transitionScene(gameScene);
@@ -1074,7 +1074,7 @@
       let hs = localStorage.getItem('hs');
       if (score > hs || !hs) localStorage.setItem('hs', score);
 
-      gameInitialized = true;
+      gameInitialized = 1;
     }
 
     drawText('Game over', 120, 10);
@@ -1091,7 +1091,7 @@
         score = 0;
         levelDepth = 0;
         lobbyTimeout = LOBBY_TIMEOUT_MAX;
-        gameInitialized = false;
+        gameInitialized = 0;
         currentScene = transitionScene(lobbyScene);
       }
     }
