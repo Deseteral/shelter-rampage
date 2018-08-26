@@ -1,5 +1,4 @@
 // TODO: Test on Windows 10
-// TODO: Make all consts - lets
 // TODO: Remove all DEBUG stuff
 // TODO: Replace true with 1, false with 0
 // TODO: Replace <= with < etc.
