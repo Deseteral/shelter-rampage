@@ -9,6 +9,7 @@
     "start": "npm run dev",
     "build": "node ./tools/build.js",
     "dev": "nodemon ./tools/build.js --dev",
+    "upload": "bash ./tools/upload.sh",
     "size": "npm run build && node ./tools/size.js",
     "baker": "http-server ./tools -p 9001 -o -c-1"
   },
