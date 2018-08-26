@@ -187,11 +187,11 @@
   let colorDarkenOnce = (c) => colorMul(c, 0.5);
 
   let strokeRect = (x, y, w, h, rgl) => {
-    rgl.fillRect(x, y, w, 1);
-    rgl.fillRect(x, y + h, w, 1);
+    rgl.fillRect(x, (y - 1), w, 2);
+    rgl.fillRect(x, y + h, w, 2);
 
-    rgl.fillRect(x, y, 1, h);
-    rgl.fillRect(x + w, y, 1, h);
+    rgl.fillRect((x - 1), y, 2, h);
+    rgl.fillRect(x + w, y, 2, h);
   };
 
   let randomFloat = (min, max) => ((random() * (max - min)) + min); // eslint-disable-line no-shadow
@@ -610,7 +610,7 @@
         progressOscillatorNode.stop();
         transitionSoundStarted = 0;
         currentScene = nextScene;
-      }, 300);
+      }, 500);
     }
   };
   // END Transition state
