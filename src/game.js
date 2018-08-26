@@ -260,20 +260,28 @@
     });
   };
 
-  let soundShoot = volume => {
+  let volumeFromDistance = distance => 1 / max(distance, 1);
+
+  let progressOscillatorNode;
+
+  let soundEffect = (type, freq, volume) => {
     let oscillatorNode = audioContext.createOscillator();
     let gainNode = audioContext.createGain();
 
-    oscillatorNode.type = 'triangle';
-    oscillatorNode.frequency.value = randomInt(90, 92);
+    oscillatorNode.type = type;
+    oscillatorNode.frequency.value = freq;
 
     oscillatorNode.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
     gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-    gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.015);
+    gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.05);
     oscillatorNode.start();
   };
+
+  let soundShoot = distance => soundEffect('triangle', randomInt(90, 92), volumeFromDistance(distance));
+  let soundHurt = () => soundEffect('sawtooth', 25, 0.75);
+  let soundEnemyHit = distance => soundEffect('triangle', randomInt(148, 152), (volumeFromDistance(distance) * 2));
 
   // let soundE2 = distance => {
   //   let oscillatorNode = audioContext.createOscillator();
@@ -567,8 +575,19 @@
 
   // Transition state
   let TRANSITION_STEP = 5;
+  let transitionSoundStarted = 0;
   let transitionScene = (nextScene) => () => {
     transition = 1;
+
+    if (!transitionSoundStarted) {
+      progressOscillatorNode = audioContext.createOscillator();
+      progressOscillatorNode.type = 'sine';
+      progressOscillatorNode.frequency.value = 130;
+      progressOscillatorNode.connect(audioContext.destination);
+      progressOscillatorNode.start();
+    }
+
+    transitionSoundStarted = 1;
 
     mainGl.fillStyle = colorToString(ENV_COLOR);
 
@@ -582,10 +601,14 @@
 
     transitionProgress += TRANSITION_STEP;
 
+    progressOscillatorNode.frequency.value = 130 + ((transitionProgress / 360) * (261 - 130));
+
     if (transitionProgress > 360) {
       setTimeout(() => {
         transition = 0;
         transitionProgress = 0;
+        progressOscillatorNode.stop();
+        transitionSoundStarted = 0;
         currentScene = nextScene;
       }, 500);
     }
@@ -643,7 +666,7 @@
           if (e.shootingFrameTimeout <= 0) {
             shootBullet(e.pos, dirToPlayer, 0, 0.2);
             e.shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_ENEMY_MAX;
-            soundShoot(1 / max(distanceEnemyToPlayer, 1));
+            soundShoot(distanceEnemyToPlayer);
           }
         }
 
@@ -657,6 +680,7 @@
             setTimeout(() => { e.blind = 0; }, 5000);
           }
           player.life -= PLAYER_MELEE_DAMAGE_TAKEN;
+          soundHurt();
         }
       }
 
@@ -702,12 +726,15 @@
           if (canRecoil) e.pos = dp;
 
           b.lifetime = 0;
+
+          soundEnemyHit(pointsDistance(e.pos, player.pos));
         }
       });
 
       // Bullet hits the player
       if (!specialActive && !b.ownerPlayer && b.lifetime > 0 && pointsDistance(b.pos, player.pos) <= 0.5) {
         player.life -= PLAYER_BULLET_DAMAGE_TAKEN;
+        soundHurt();
       }
     });
 
@@ -974,7 +1001,7 @@
       shootBullet(player.pos, player.dir, 1, 0.1);
       shootingFrameTimeout = SHOOTING_FRAME_TIMEOUT_MAX;
       if (!specialActive) player.gunHeat--;
-      soundShoot(0.75);
+      soundShoot(1);
     }
 
     // Process frame timers
