@@ -623,10 +623,12 @@
 
       // soundE2(pointsDistance(e.pos, player.pos));
 
-      enemies.forEach(ee => {
-        if (ee === e) return;
-        if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
-      });
+      if (e.sprite === 'e1') {
+        enemies.forEach(ee => {
+          if (ee === e) return;
+          if (pointsDistance(e.pos, ee.pos) <= 0.5) e.dir = vecMul(e.dir, -1);
+        });
+      }
 
       if (canEnemySeePlayer(e, playerIsShooting)) {
         let dirToPlayer = dirVecPoints(e.pos, player.pos);
