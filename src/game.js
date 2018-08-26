@@ -23,7 +23,7 @@
 
   const PLAYER_MOVE_SPEED = 0.1;
   const PLAYER_ROTATE_SPEED = 0.03;
-  const PLAYER_INVISIBILITY_TIMEOUT_MAX = 2 * 60; // TODO: Precalculate that
+  const PLAYER_INVISIBILITY_TIMEOUT_MAX = 120;
   const PLAYER_BULLET_DAMAGE_TAKEN = 5;
   const PLAYER_MELEE_DAMAGE_TAKEN = 8;
   const PLAYER_GUN_HEAT_MAX = 10;
@@ -33,7 +33,7 @@
   const E2_MOVE_SPEED = 0.12; // e2 is melee enemy
 
   const BULLET_SPEED = 0.5;
-  const BULLET_LIFETIME_FRAMES = 60 * 3; // TODO: Precalculate that
+  const BULLET_LIFETIME_FRAMES = 180;
   const SHOOTING_FRAME_TIMEOUT_MAX = 7;
   const SHOOTING_FRAME_TIMEOUT_ENEMY_MAX = 30;
 
@@ -48,7 +48,7 @@
     gunHeatBlock: false,
   });
 
-  const LOBBY_TIMEOUT_MAX = 60 * 2; // TODO: Precalculate that
+  const LOBBY_TIMEOUT_MAX = 100;
   // END Constant values
 
   // Textures
@@ -89,24 +89,24 @@
     rotate: 0,
   };
 
-  // TODO: This could use some simplifying
-  document.addEventListener('mousemove', e => {
+  const event = document.addEventListener;
+  event('mousemove', e => {
     keyState.rotate = e.movementX;
   });
 
-  document.addEventListener('mousedown', e => {
+  event('mousedown', e => {
     keyState.shoot = (e.button === 0);
   });
 
-  document.addEventListener('mouseup', () => {
+  event('mouseup', () => {
     keyState.shoot = false;
   });
 
-  document.addEventListener('keydown', e => {
+  event('keydown', e => {
     keyState[KEY_CODES[e.keyCode]] = true;
   });
 
-  document.addEventListener('keyup', e => {
+  event('keyup', e => {
     keyState[KEY_CODES[e.keyCode]] = false;
   });
   // END Keyboard state
@@ -118,11 +118,10 @@
 
   let mainGl = mainCanvas.getContext('2d');
   mainGl.imageSmoothingEnabled = false;
-  mainCanvas.onclick = () => mainCanvas.requestPointerLock(); // TODO: Could I get rid of `() =>`?
+  mainCanvas.onclick = () => mainCanvas.requestPointerLock();
 
   const offscreen = document.createElement('canvas');
-  offscreen.width = BUFFER_WIDTH;
-  offscreen.height = BUFFER_HEIGHT;
+  offscreen.width = offscreen.height = BUFFER_WIDTH;
   const gl = offscreen.getContext('2d');
   // END Prelude
 
@@ -317,7 +316,7 @@
 
   // Bake font
   const FONT_SIZE = 24;
-  const FONT_GLYPH_SIZE = 2 * FONT_SIZE; // TODO: Precalc that
+  const FONT_GLYPH_SIZE = 48;
   const glyphsPrimary = {};
   const glyphsSecondary = {};
 
@@ -357,11 +356,9 @@
   makeFonts();
 
   const drawTextBase = (text, x, y, glyps) => {
-    text
-      .split('')
-      .forEach((letter, idx) => {
-        mainGl.drawImage(glyps[letter], (x + (idx * (FONT_SIZE - 10))), y);
-      });
+    text.split('').forEach((letter, idx) => {
+      mainGl.drawImage(glyps[letter], (x + (idx * (FONT_SIZE - 10))), y);
+    });
   };
 
   const drawText = (text, x, y) => {
@@ -388,7 +385,7 @@
 
       const numberOfSteps = 10;
       const birthLimit = 5;
-      const deathLimit = 4; // not more than 8
+      const deathLimit = 4;
       const chanceToStartAlive = 0.49;
 
       const countNeighbours = (x, y) => {
@@ -486,7 +483,7 @@
 
     removeClosedRooms(m);
 
-    // Randomize walls
+    // Randomize wall variants
     repeat(LEVEL_SIZE, (y) => {
       repeat(LEVEL_SIZE, (x) => {
         if (m[x][y]) m[x][y] = randomInt(1, WALL_TEX.length);
@@ -572,7 +569,7 @@
 
     window.DEBUG = false; // TODO: DEBUG: Remove debug
 
-    window.requestAnimationFrame(run); // TODO: Could I get rid of window. ?
+    window.requestAnimationFrame(run);
   };
 
   // Transition state
@@ -597,7 +594,7 @@
         transition = false;
         transitionProgress = 0;
         currentScene = nextScene;
-      }, 600);
+      }, 500);
     }
   };
   // END Transition state
@@ -731,7 +728,7 @@
     powerups = powerups.filter(pu => !pu.used);
 
     // Render world
-    const zBuffer = []; // for every vertical line
+    const zBuffer = [];
     const spriteOrder = [];
 
     for (let x = 0; x < BUFFER_WIDTH; x++) {
@@ -742,21 +739,18 @@
       let mapX = player.pos.x | 0;
       let mapY = player.pos.y | 0;
 
-      // length of ray from current position to next x or y-side
       let sideDistX;
       let sideDistY;
 
-      // length of ray from one x or y-side to next x or y-side
       const deltaDistX = abs(1 / rayDirX);
       const deltaDistY = abs(1 / rayDirY);
       let perpWallDist;
 
-      // what direction to step in x or y-direction (either +1 or -1)
       let stepX;
       let stepY;
 
       let hit = false;
-      let side; // was a NS or a EW wall hit?
+      let side;
 
       if (rayDirX < 0) {
         stepX = -1;
@@ -774,9 +768,7 @@
         sideDistY = ((mapY + 1) - player.pos.y) * deltaDistY;
       }
 
-      // perform DDA
       while (!hit) {
-      // jump to next map square, OR in x-direction, OR in y-direction
         if (sideDistX < sideDistY) {
           sideDistX += deltaDistX;
           mapX += stepX;
@@ -787,23 +779,19 @@
           side = 1;
         }
 
-        // Check if ray has hit a wall
         if (level[mapX][mapY] > 0) {
           hit = true;
         }
       }
 
-      // Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
       if (side === 0) {
         perpWallDist = ((mapX - player.pos.x) + ((1 - stepX) / 2)) / rayDirX;
       } else {
         perpWallDist = ((mapY - player.pos.y) + ((1 - stepY) / 2)) / rayDirY;
       }
 
-      // Calculate height of line to draw on screen
       const lineHeight = (BUFFER_HEIGHT / perpWallDist) | 0;
 
-      // calculate lowest and highest pixel to fill in current stripe
       let drawStart = (-lineHeight / 2) + (BUFFER_HEIGHT / 2);
       if (drawStart < 0) {
         drawStart = 0;
@@ -816,26 +804,24 @@
       drawStart |= 0;
       drawEnd |= 0;
 
-      // calculate value of wallX
-      let wallX; // where exactly the wall was hit
+      let wallX;
       if (side === 0) {
         wallX = player.pos.y + (perpWallDist * rayDirY);
       } else {
         wallX = player.pos.x + (perpWallDist * rayDirX);
       }
-      wallX -= floor(wallX); // This actually has to be floored, this is not int casting
+      wallX -= floor(wallX);
 
-      // x coordinate on the texture
       let texX = (wallX * TEXTURE_SIZE) | 0;
       if (side === 0 && rayDirX > 0) texX = TEXTURE_SIZE - texX - 1;
       if (side === 1 && rayDirY < 0) texX = TEXTURE_SIZE - texX - 1;
 
-      let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT; // 0 to 1
+      let lightScale = (drawEnd - drawStart) / BUFFER_HEIGHT;
       let lightBumpValue = 0.2;
       let shadeFactor = min((((lightScale * 10) | 0) / 10) + lightBumpValue, 1);
 
       for (let y = drawStart; y < drawEnd; y++) {
-        let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128); // 256 and 128 factors to avoid floats
+        let d = ((y * 256) - (BUFFER_HEIGHT * 128)) + (lineHeight * 128);
         let texY = (((d * TEXTURE_SIZE) / lineHeight) / 256) | 0;
 
         const wallTexture = WALL_TEX[level[mapX][mapY] - 1];
@@ -853,7 +839,6 @@
     // Sprite casting
     const sprites = [].concat(enemies, bullets, powerups);
 
-    // TODO: Try to render sprites in the bigger canvas resulting in higher quality sprites
     for (let i = 0; i < sprites.length; i++) {
       spriteOrder[i] = {
         order: i,
@@ -864,39 +849,30 @@
     spriteOrder.sort((a, b) => b.distance - a.distance);
 
     for (let i = 0; i < sprites.length; i++) {
-    // translate sprite position to relative to camera
       let currentSprite = sprites[spriteOrder[i].order];
       let spriteTexture = SPRITE_TEX[currentSprite.sprite];
       let spriteX = currentSprite.pos.x - player.pos.x;
       let spriteY = currentSprite.pos.y - player.pos.y;
 
-      // transform sprite with the inverse camera matrix
-      // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
-      // [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
-      // [ planeY   dirY ]                                          [ -planeY  planeX ]
-
-      let invDet = 1.0 / ((plane.x * player.dir.y) - (player.dir.x * plane.y)); // required for correct matrix multiplication
+      let invDet = 1.0 / ((plane.x * player.dir.y) - (player.dir.x * plane.y));
 
       let transformX = invDet * ((player.dir.y * spriteX) - (player.dir.x * spriteY));
-      let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY)); // this is actually the depth inside the screen, that what Z is in 3D
+      let transformY = invDet * ((-plane.y * spriteX) + (plane.x * spriteY));
 
       let spriteScreenX = ((BUFFER_WIDTH / 2) * (1 + (transformX / transformY))) | 0;
 
-      // parameters for scaling and moving the sprites
+      // Sprite scaling
       const uDiv = 2;
       const vDiv = 2;
       const vMove = TEXTURE_SIZE;
       let vMoveScreen = (vMove / transformY) | 0;
 
-      // calculate height of the sprite on screen
-      let spriteHeight = (abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0; // using "transformY" instead of the real distance prevents fisheye
-      // calculate lowest and highest pixel to fill in current stripe
+      let spriteHeight = (abs(((BUFFER_HEIGHT / transformY) | 0)) / vDiv) | 0;
       let drawStartY = (((-spriteHeight / 2) + (BUFFER_HEIGHT / 2)) | 0) + vMoveScreen;
       if (drawStartY < 0) drawStartY = 0;
       let drawEndY = (((spriteHeight / 2) + (BUFFER_HEIGHT / 2)) | 0) + vMoveScreen;
       if (drawEndY >= BUFFER_HEIGHT) drawEndY = BUFFER_HEIGHT - 1;
 
-      // calculate width of the sprite
       let spriteWidth = (abs(((BUFFER_HEIGHT / transformY) | 0)) / uDiv) | 0;
       let drawStartX = ((-spriteWidth / 2) + spriteScreenX) | 0;
       if (drawStartX < 0) drawStartX = 0;
@@ -904,24 +880,18 @@
       if (drawEndX >= BUFFER_WIDTH) drawEndX = BUFFER_WIDTH - 1;
 
       let lightBumpValue = 0.4;
-      let lightDistance = ((drawEndY - drawStartY) / BUFFER_HEIGHT); // from 0 to 1
+      let lightDistance = ((drawEndY - drawStartY) / BUFFER_HEIGHT);
       let shadeFactor = min(1, (((lightDistance * 10) | 0) / 10) + lightBumpValue);
 
       let color = colorMul(OBJECT_COLOR, shadeFactor);
       gl.fillStyle = currentSprite.hit ? 'white' : colorToString(color);
 
-      // loop through every vertical stripe of the sprite on screen
       for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
         let texX = ((((((256 * (stripe - ((-spriteWidth / 2) + spriteScreenX))) * TEXTURE_SIZE) / spriteWidth)) | 0) / 256) | 0;
 
-        // the conditions in the if are:
-        // 1) it's in front of camera plane so you don't see things behind you
-        // 2) it's on the screen (left)
-        // 3) it's on the screen (right)
-        // 4) ZBuffer, with perpendicular distance
         if (transformY > 0 && stripe > 0 && stripe < BUFFER_WIDTH && transformY < zBuffer[stripe]) {
-          for (let y = drawStartY; y < drawEndY; y++) { // for every pixel of the current stripe
-            let d = (((y - vMoveScreen) * 256) - (BUFFER_HEIGHT * 128)) + (spriteHeight * 128); // 256 and 128 factors to avoid floats
+          for (let y = drawStartY; y < drawEndY; y++) {
+            let d = (((y - vMoveScreen) * 256) - (BUFFER_HEIGHT * 128)) + (spriteHeight * 128);
             let texY = (((d * TEXTURE_SIZE) / spriteHeight) / 256) | 0;
 
             if (!spriteTexture[texY]) continue;
@@ -947,14 +917,14 @@
     const hpBarLength = ((player.life / 100) * 100) | 0;
     mainGl.fillRect(10, 10, hpBarLength, 10);
 
-    // Render gun heat
+    // Render gun heat bar
     mainGl.fillStyle = colorToString(colorDarkenOnce(OBJECT_COLOR));
     mainGl.fillRect(10, 380, 50, 10);
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     const heatBarLength = ((player.gunHeat / PLAYER_GUN_HEAT_MAX) * 50) | 0;
     mainGl.fillRect(10, 380, heatBarLength, 10);
 
-    // Render special
+    // Render special bar
     mainGl.fillStyle = colorToString(OBJECT_COLOR);
     repeat(4, (idx) => strokeRect(280 + (idx * 20), 370, 16, 20, mainGl));
     repeat(specialCounter, (idx) => mainGl.fillRect(280 + (idx * 20), 370, 16, 20));
@@ -1013,7 +983,6 @@
     }
 
     // Process frame timers
-    // TODO: Perhaps I should move this between update and render
     shootingFrameTimeout--;
     invisibilityTimeout--;
     specialTimeout--;
@@ -1134,5 +1103,5 @@
   // END Game over scene
 
   currentScene = lobbyScene;
-  run(); // TODO: Put this at the very end
+  run();
 })();

@@ -21,6 +21,7 @@
     "max-len": "off",
     "no-bitwise": "off",
     "no-continue": "off",
-    "no-floating-decimal": "off"
+    "no-floating-decimal": "off",
+    "no-multi-assign": "off"
   }
 }
