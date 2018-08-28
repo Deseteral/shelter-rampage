@@ -1144,11 +1144,12 @@
   // Intro state
   let introX = 0;
   let introY = 0;
+  let introDone = 0;
   let INTRO_LETTER_TIMEOUT_MAX = 8;
   let introLetterTimeout = INTRO_LETTER_TIMEOUT_MAX;
 
   let introScene = () => {
-    if (introLetterTimeout <= 0) {
+    if (!introDone && introLetterTimeout <= 0) {
       if (introY < INTRO_TEXT.length) {
         if (introX < INTRO_TEXT[introY].length) {
           drawTextBase(INTRO_TEXT[introY][introX], 10 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
@@ -1160,12 +1161,24 @@
           introX = 0;
           introY++;
         }
+      } else {
+        introDone = 1;
       }
     }
 
+    if (introDone) {
+      repeat(INTRO_TEXT.length, (idx) => {
+        drawTextBase(INTRO_TEXT[idx], 10, 10 + (idx * 22), glyphsPrimary);
+      });
+    }
+
     if (keyState.shoot) {
-      disableClear = 0;
-      currentScene = transitionScene(lobbyScene);
+      if (!introDone) {
+        introDone = 1;
+      } else {
+        disableClear = 0;
+        currentScene = transitionScene(lobbyScene);
+      }
     }
 
     introLetterTimeout--;
