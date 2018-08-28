@@ -539,9 +539,8 @@
     enemies = [];
     powerups = [];
 
-    // repeat(min(20, randomInt(2 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
-    // repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
-    repeat(2, () => makeEnemy('e2', getPos()));
+    repeat(min(20, randomInt(2 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
+    repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
 
     return m;
   };
