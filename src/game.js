@@ -144,7 +144,6 @@
   let gameInitialized = 0;
   let lobbyTimeout = LOBBY_TIMEOUT_MAX;
 
-  let transition = 0;
   let transitionProgress = 0;
 
   let level = null;
@@ -160,6 +159,8 @@
   let specialTimeout = SPECIAL_TIMEOUT_MAX;
 
   let plane = { ...DEFAULT_PLANE };
+
+  let disableClear = 0;
   // END Game objects
 
   // Utility functions
@@ -199,6 +200,11 @@
     };
   };
   let dirVecPoints = (from, to) => vecNorm(vecSub(to, from));
+
+  let clearScreen = () => {
+    mainGl.fillStyle = 'black';
+    mainGl.fillRect(0, 0, 360, 400);
+  };
 
   let colorToString = c => `rgb(${c.r},${c.g},${c.b})`;
   let colorMul = (c, scal) => ({ r: c.r * scal, g: c.g * scal, b: c.b * scal });
@@ -553,9 +559,8 @@
   let run = () => {
     if (keyState.debug) window.DEBUG = 1; // TODO: DEBUG: Remove debug
 
-    if (!transition) {
-      mainGl.fillStyle = 'black';
-      mainGl.fillRect(0, 0, 360, 400);
+    if (!disableClear) {
+      clearScreen();
     }
 
     currentScene();
@@ -585,7 +590,7 @@
   let TRANSITION_STEP = 5;
   let transitionSoundStarted = 0;
   let transitionScene = (nextScene) => () => {
-    transition = 1;
+    disableClear = 1;
 
     if (!transitionSoundStarted) {
       progressOscillatorNode = audioContext.createOscillator();
@@ -613,7 +618,7 @@
 
     if (transitionProgress > 360) {
       setTimeout(() => {
-        transition = 0;
+        disableClear = 0;
         transitionProgress = 0;
         progressOscillatorNode.stop();
         transitionSoundStarted = 0;
@@ -1133,18 +1138,37 @@
   // END Game over scene
 
   // Intro state
+  let introX = 0;
+  let introY = 0;
+  let INTRO_LETTER_TIMEOUT_MAX = 3;
+  let introLetterTimeout = INTRO_LETTER_TIMEOUT_MAX;
+
   let introScene = () => {
-    // TODO: Make cool text effect
-    repeat(INTRO_TEXT.length, (idx) => {
-      drawTextBase(INTRO_TEXT[idx], 10, 10 + (idx * 22), glyphsPrimary);
-    });
+    if (introLetterTimeout <= 0) {
+      if (introY < INTRO_TEXT.length) {
+        if (introX < INTRO_TEXT[introY].length) {
+          drawTextBase(INTRO_TEXT[introY][introX], 10 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
+
+          introX++;
+          introLetterTimeout = randomInt(1, INTRO_LETTER_TIMEOUT_MAX);
+        } else {
+          introX = 0;
+          introY++;
+        }
+      }
+    }
 
     if (keyState.shoot) {
+      disableClear = 0;
       currentScene = transitionScene(lobbyScene);
     }
+
+    introLetterTimeout--;
   };
   // END Intro state
 
+  clearScreen();
+  disableClear = 1;
   currentScene = introScene;
   run();
 })();
