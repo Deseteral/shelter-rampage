@@ -303,25 +303,7 @@
   let soundShoot = distance => soundEffect('triangle', randomInt(90, 92), volumeFromDistance(distance));
   let soundHurt = () => soundEffect('sawtooth', 25, 0.75);
   let soundEnemyHit = distance => soundEffect('triangle', randomInt(148, 152), (volumeFromDistance(distance) * 2));
-
-  // let soundE2 = distance => {
-  //   let oscillatorNode = audioContext.createOscillator();
-  //   let gainNode = audioContext.createGain();
-
-  //   let distanceScale = ((1 / distance) * 5);
-
-  //   console.log(distanceScale);
-
-  //   oscillatorNode.type = 'sawtooth';
-  //   oscillatorNode.frequency.value = 2;
-
-  //   oscillatorNode.connect(gainNode);
-  //   gainNode.connect(audioContext.destination);
-
-  //   gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-  //   gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.015);
-  //   oscillatorNode.start();
-  // };
+  let soundE2 = distance => soundEffect('sawtooth', 10 * volumeFromDistance(distance), volumeFromDistance(distance) * 3);
   // END Utility functions
 
   // Colors
@@ -547,8 +529,9 @@
     enemies = [];
     powerups = [];
 
-    repeat(min(20, randomInt(2 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
-    repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
+    // repeat(min(20, randomInt(2 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
+    // repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
+    repeat(2, () => makeEnemy('e2', getPos()));
 
     return m;
   };
@@ -669,7 +652,7 @@
         e.changeDirTimer = enemyDirTimer();
       }
 
-      // soundE2(pointsDistance(e.pos, player.pos));
+      soundE2(pointsDistance(e.pos, player.pos));
 
       if (e.sprite === 'e1') {
         enemies.forEach(ee => {
@@ -1151,6 +1134,7 @@
 
   // Intro state
   let introScene = () => {
+    // TODO: Make cool text effect
     repeat(INTRO_TEXT.length, (idx) => {
       drawTextBase(INTRO_TEXT[idx], 10, 10 + (idx * 22), glyphsPrimary);
     });
