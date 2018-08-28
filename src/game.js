@@ -287,6 +287,7 @@
     let oscillatorNode = audioContext.createOscillator();
     let gainNode = audioContext.createGain();
 
+    // TODO: Use OscillatorNode constructor
     oscillatorNode.type = type;
     oscillatorNode.frequency.value = freq;
 
@@ -296,6 +297,7 @@
     gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
     gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.05);
     oscillatorNode.start();
+    oscillatorNode.stop(audioContext.currentTime + 1);
   };
 
   let soundShoot = distance => soundEffect('triangle', randomInt(90, 92), volumeFromDistance(distance));
@@ -541,7 +543,7 @@
     });
 
     // Place enemies
-    repeat(min(20, randomInt(1 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
+    repeat(min(20, randomInt(2 * (levelDepth || 1), 5 * (levelDepth || 1))), () => makeEnemy('e1', getPos()));
     repeat(min(5, levelDepth), () => makeEnemy('e2', getPos()));
 
     return m;
