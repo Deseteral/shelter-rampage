@@ -306,6 +306,10 @@
     oscillatorNode.stop(audioContext.currentTime + 1);
   };
 
+  let soundLetter = () => {
+    soundEffect('sine', randomInt(10, 20), 1);
+    soundEffect('sine', randomInt(100, 120), 1);
+  };
   let soundShoot = distance => soundEffect('triangle', randomInt(90, 92), volumeFromDistance(distance));
   let soundHurt = () => soundEffect('sawtooth', 25, 0.75);
   let soundEnemyHit = distance => soundEffect('triangle', randomInt(148, 152), (volumeFromDistance(distance) * 2));
@@ -1140,7 +1144,7 @@
   // Intro state
   let introX = 0;
   let introY = 0;
-  let INTRO_LETTER_TIMEOUT_MAX = 3;
+  let INTRO_LETTER_TIMEOUT_MAX = 8;
   let introLetterTimeout = INTRO_LETTER_TIMEOUT_MAX;
 
   let introScene = () => {
@@ -1148,9 +1152,10 @@
       if (introY < INTRO_TEXT.length) {
         if (introX < INTRO_TEXT[introY].length) {
           drawTextBase(INTRO_TEXT[introY][introX], 10 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
+          soundLetter();
 
           introX++;
-          introLetterTimeout = randomInt(1, INTRO_LETTER_TIMEOUT_MAX);
+          introLetterTimeout = randomInt(3, INTRO_LETTER_TIMEOUT_MAX);
         } else {
           introX = 0;
           introY++;
