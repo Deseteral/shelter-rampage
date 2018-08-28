@@ -9,6 +9,25 @@
     sin, cos, floor, random, sqrt, ceil, min, max, abs,
   } = Math;
 
+  let INTRO_TEXT = [
+    'May 5th, 2143',
+    '',
+    'You have been sent to',
+    'investigate what happend',
+    'in the Shelter A142.',
+    '',
+    'Your task is simple -',
+    'find and kill any enemy',
+    'forces that occupy',
+    'the shelter.',
+    '',
+    'Beware!',
+    'That shelter is very',
+    "deep and we've got",
+    "no intel about what's",
+    'inside it.',
+  ];
+
   let TEXTURE_SIZE = 16;
   let BUFFER_WIDTH = 90;
   let BUFFER_HEIGHT = 100;
@@ -1124,6 +1143,18 @@
   };
   // END Game over scene
 
-  currentScene = lobbyScene;
+  // Intro state
+  let introScene = () => {
+    repeat(INTRO_TEXT.length, (idx) => {
+      drawTextBase(INTRO_TEXT[idx], 10, 10 + (idx * 22), glyphsPrimary);
+    });
+
+    if (keyState.shoot) {
+      currentScene = transitionScene(lobbyScene);
+    }
+  };
+  // END Intro state
+
+  currentScene = introScene;
   run();
 })();
