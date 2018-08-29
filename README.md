@@ -4,6 +4,8 @@ You can play it [here](http://deseteral.github.io/gsgdc-2018)!
 
 The game is distributed as a single `index.htm` file located in `./dist` directory.
 
+![Screenshot](/tools/screenshot.png?raw=true "Screenshot")
+
 ## Instructions
 Use `WASD` to move, look around using mouse and shoot using `LEFT MOUSE BUTTON` or `SPACE`.
 
