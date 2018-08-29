@@ -1,5 +1,4 @@
 // TODO: Test on Windows 10
-// TODO: Remove all DEBUG stuff
 // TODO: Add cool screenshot to the readme.md
 // TODO: Host the submission on the github page
 
@@ -87,7 +86,6 @@
     68: 'right',
     32: 'shoot',
     70: 'special',
-    191: 'debug', // TODO: DEBUG: Remove debug
   };
 
   let keyState = {
@@ -97,7 +95,6 @@
     right: 0,
     shoot: 0,
     special: 0,
-    debug: 0, // TODO: DEBUG: Remove debug
     rotate: 0,
   };
 
@@ -546,45 +543,12 @@
   };
   // END Level generator
 
-  // TODO: DEBUG: Remove minimap
-  {
-    let minimap = document.createElement('canvas');
-    minimap.id = 'minimap';
-    minimap.width = 32;
-    minimap.height = 32;
-    minimap.style.position = 'absolute';
-    minimap.style.width = '256px';
-    minimap.style['image-rendering'] = 'pixelated';
-    document.body.insertBefore(minimap, document.body.firstChild);
-    window.minimap = minimap;
-  }
-
   let run = () => {
-    if (keyState.debug) window.DEBUG = 1; // TODO: DEBUG: Remove debug
-
     if (!disableClear) {
       clearScreen();
     }
 
     currentScene();
-
-    if (window.DEBUG) { // TODO: DEBUG: Remove color counting
-      let dict = {};
-      let pixels = mainGl.getImageData(0, 0, 360, 400).data;
-      for (let i = 0; i < pixels.length; i += 4) {
-        let key = colorToString({ r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] });
-        if (pixels[i + 3] !== 255) throw new Error('Alpha is not 255!');
-        dict[key] = 1;
-      }
-
-      let colorCount = Object.keys(dict).length;
-      let logLevel = colorCount > 32 ? 'error' : 'log';
-      console[logLevel](`Distinct colors in frame: ${colorCount}`);
-    }
-
-    keyState.rotate = 0;
-
-    window.DEBUG = 0; // TODO: DEBUG: Remove debug
 
     window.requestAnimationFrame(run);
   };
@@ -633,19 +597,9 @@
 
   // Game scene
   let gameScene = () => {
-    // TODO: DEBUG: Remove minimap
-    let { minimap } = window;
-    let minimapGl = minimap.getContext('2d');
-    minimapGl.imageSmoothingEnabled = 0;
-    minimap.style.display = window.DEBUG_minimap ? 'block' : 'none';
-
     // Clear offscreen buffer
     gl.fillStyle = 'black';
     gl.fillRect(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-
-    // TODO: DEBUG: Remove minimap
-    minimapGl.fillStyle = 'black';
-    minimapGl.fillRect(0, 0, LEVEL_SIZE, LEVEL_SIZE);
 
     // Update world
     let playerIsShooting = keyState.shoot && (specialActive || shootingFrameTimeout <= 0) && !player.gunHeatBlock;
@@ -1047,21 +1001,6 @@
 
     if (player.life <= 0) {
       currentScene = transitionScene(gameOverScene); // eslint-disable-line no-use-before-define
-    }
-
-    // TODO: DEBUG: Remove minimap
-    // Draw minimap
-    if (window.DEBUG_minimap) {
-      minimapGl.fillStyle = 'white';
-      for (let y = 0; y < LEVEL_SIZE; y++) {
-        for (let x = 0; x < LEVEL_SIZE; x++) {
-          if (level[x][y] !== 0) minimapGl.fillRect(x, y, 1, 1);
-        }
-      }
-      minimapGl.fillStyle = 'yellow';
-      enemies.forEach(e => minimapGl.fillRect(e.pos.x | 0, e.pos.y | 0, 1, 1));
-      minimapGl.fillStyle = 'red';
-      minimapGl.fillRect(player.pos.x | 0, player.pos.y | 0, 1, 1);
     }
   };
   // END Game scene
