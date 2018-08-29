@@ -1,6 +1,6 @@
 # Shelter Rampage
 My game for the [Gynvael's Summer GameDev Challenge 2018](https://gynvael.coldwind.pl/?id=686).
-You can play it [here](http://deseteral.github.io/gsgdc-2018)!
+You can play it [here](https://deseteral.github.io/shelter-rampage/)!
 
 The game is distributed as a single `index.htm` file located in `./dist` directory.
 
