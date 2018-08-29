@@ -1,6 +1,3 @@
-// TODO: Test on Windows 10
-// TODO: Host the submission on the github page
-
 (() => {
   // Constant values
   let {
