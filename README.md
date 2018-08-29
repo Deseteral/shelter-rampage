@@ -9,6 +9,8 @@ The game is distributed as a single `index.htm` file located in `./dist` directo
 ## Instructions
 Use `WASD` to move, look around using mouse and shoot using `LEFT MOUSE BUTTON` or `SPACE`.
 
+Your job is to clear the floor from enemies. When you do that you will proceed to the next floor.
+
 Bullets and enemies hits can hurt you. Your health is represented in top-left corner of the screen.
 
 Your gun has unlimited ammo but shotting can overheat it - when that happens you will have to wait for it to cool down.
