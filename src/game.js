@@ -286,13 +286,9 @@
 
   let progressOscillatorNode;
 
-  let soundEffect = (type, freq, volume) => {
-    let oscillatorNode = audioContext.createOscillator();
+  let soundEffect = (type, frequency, volume) => {
+    let oscillatorNode = new OscillatorNode(audioContext, { type, frequency });
     let gainNode = audioContext.createGain();
-
-    // TODO: Use OscillatorNode constructor
-    oscillatorNode.type = type;
-    oscillatorNode.frequency.value = freq;
 
     oscillatorNode.connect(gainNode);
     gainNode.connect(audioContext.destination);
@@ -550,6 +546,8 @@
 
     currentScene();
 
+    keyState.rotate = 0;
+
     window.requestAnimationFrame(run);
   };
 
@@ -560,9 +558,7 @@
     disableClear = 1;
 
     if (!transitionSoundStarted) {
-      progressOscillatorNode = audioContext.createOscillator();
-      progressOscillatorNode.type = 'sine';
-      progressOscillatorNode.frequency.value = 130;
+      progressOscillatorNode = new OscillatorNode(audioContext, { type: 'sine', frequency: 130 });
       progressOscillatorNode.connect(audioContext.destination);
       progressOscillatorNode.start();
     }
