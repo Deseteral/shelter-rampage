@@ -12,7 +12,7 @@
     'May 5th, 2143',
     '',
     'You have been sent to',
-    'investigate what happend',
+    'investigate what happened',
     'in the Shelter A142.',
     '',
     'Your task is simple -',
@@ -1086,7 +1086,7 @@
     if (!introDone && introLetterTimeout <= 0) {
       if (introY < INTRO_TEXT.length) {
         if (introX < INTRO_TEXT[introY].length) {
-          drawTextBase(INTRO_TEXT[introY][introX], 10 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
+          drawTextBase(INTRO_TEXT[introY][introX], 5 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
           soundLetter();
 
           introX++;
