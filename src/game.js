@@ -1,5 +1,4 @@
 // TODO: Test on Windows 10
-// TODO: Add cool screenshot to the readme.md
 // TODO: Host the submission on the github page
 
 (() => {
@@ -1083,36 +1082,39 @@
   let introLetterTimeout = INTRO_LETTER_TIMEOUT_MAX;
 
   let introScene = () => {
-    if (!introDone && introLetterTimeout <= 0) {
-      if (introY < INTRO_TEXT.length) {
-        if (introX < INTRO_TEXT[introY].length) {
-          drawTextBase(INTRO_TEXT[introY][introX], 5 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
-          soundLetter();
-
-          introX++;
-          introLetterTimeout = randomInt(3, INTRO_LETTER_TIMEOUT_MAX);
+    if (introLetterTimeout <= 0) {
+      if (keyState.shoot) {
+        if (!introDone) {
+          introDone = 1;
+          introLetterTimeout = INTRO_LETTER_TIMEOUT_MAX;
         } else {
-          introX = 0;
-          introY++;
+          disableClear = 0;
+          currentScene = transitionScene(lobbyScene);
         }
-      } else {
-        introDone = 1;
+      }
+
+      if (!introDone) {
+        if (introY < INTRO_TEXT.length) {
+          if (introX < INTRO_TEXT[introY].length) {
+            drawTextBase(INTRO_TEXT[introY][introX], 5 + (introX * 14), 10 + (introY * 22), glyphsPrimary);
+            soundLetter();
+
+            introX++;
+            introLetterTimeout = randomInt(3, INTRO_LETTER_TIMEOUT_MAX);
+          } else {
+            introX = 0;
+            introY++;
+          }
+        } else {
+          introDone = 1;
+        }
       }
     }
 
     if (introDone) {
       repeat(INTRO_TEXT.length, (idx) => {
-        drawTextBase(INTRO_TEXT[idx], 10, 10 + (idx * 22), glyphsPrimary);
+        drawTextBase(INTRO_TEXT[idx], 5, 10 + (idx * 22), glyphsPrimary);
       });
-    }
-
-    if (keyState.shoot) {
-      if (!introDone) {
-        introDone = 1;
-      } else {
-        disableClear = 0;
-        currentScene = transitionScene(lobbyScene);
-      }
     }
 
     introLetterTimeout--;
