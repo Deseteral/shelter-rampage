@@ -1,0 +1,217 @@
+<body style="margin: 0; background: black;">
+<canvas id="c" width="1024" height="1024"></canvas>
+
+<script>
+  let LEVEL_SIZE = 32;
+  let squareArray = asize => Array(asize).fill([]).map(() => Array(asize).fill(0));
+  let repeat = (times, cb, start = 0) => {
+    for (let i = start; i < times; i++) cb(i);
+  };
+  const { random } = Math;
+  const delay = (ms) => {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
+  const renderQueue = [];
+
+  const canvas = document.getElementById('c');
+  const gl = canvas.getContext('2d');
+
+  const renderMap = (map, frameAmount = 1, floodQueue = []) => {
+    const tileSize = 32;
+    const c = document.createElement('canvas');
+    c.width = 1024;
+    c.height = 1024;
+    const ctx = c.getContext('2d');
+
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    for (let y = 0; y < LEVEL_SIZE; y++) {
+      for (let x = 0; x < LEVEL_SIZE; x++) {
+        if (map[x][y]) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+        }
+      }
+    }
+
+    floodQueue.forEach(f => {
+      ctx.fillStyle = '#03A9FC';
+      ctx.fillRect(f.x * tileSize, f.y * tileSize, tileSize, tileSize);
+    });
+
+    repeat(frameAmount, () => renderQueue.push(c));
+  };
+
+  const renderFlood = (x, y, frameAmount = 1) => {
+    const tileSize = 32;
+    const c = document.createElement('canvas');
+    c.width = 1024;
+    c.height = 1024;
+    const ctx = c.getContext('2d');
+
+    ctx.fillStyle = '#03A9FC';
+    ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+
+    repeat(frameAmount, () => renderQueue.push(c));
+  };
+
+  let generateLevel = async () => {
+    // 1. Pick middle tile
+    // 2. If wall -> regenerate map
+    // 3. Make flood fill
+    // 4. If tile was not marked as active -> set to wall
+    // 5. Place enemies
+    // 6. Place the player
+    let celluarAutomata = () => {
+      let m = squareArray(LEVEL_SIZE);
+
+      let numberOfSteps = 10;
+      let birthLimit = 5;
+      let deathLimit = 4;
+      let chanceToStartAlive = 0.49;
+
+      let countNeighbours = (x, y) => {
+        let count = 0;
+        [-1, 0, 1].forEach(i => {
+          [-1, 0, 1].forEach(j => {
+            if (i === 0 && j === 0) return;
+
+            let nx = x + i;
+            let ny = y + j;
+
+            if ((nx < 0 || ny < 0 || nx >= LEVEL_SIZE || ny >= LEVEL_SIZE) || m[nx][ny]) {
+              count++;
+            }
+          });
+        });
+        return count;
+      };
+
+        // Initialization
+      repeat(LEVEL_SIZE, (y) => {
+        repeat(LEVEL_SIZE, (x) => {
+          m[x][y] = random() < chanceToStartAlive ? 1 : 0;
+          // renderMap(m); // random
+        });
+      });
+
+      // renderMap(m, 60); // random
+
+      // Simulation step
+      repeat(numberOfSteps, () => {
+        let newMap = squareArray(LEVEL_SIZE);
+        repeat(LEVEL_SIZE, (y) => {
+          repeat(LEVEL_SIZE, (x) => {
+            let nc = countNeighbours(x, y);
+            if (m[x][y]) {
+              newMap[x][y] = nc < deathLimit ? 0 : 1;
+            } else if (nc > birthLimit) {
+              newMap[x][y] = 1;
+            } else {
+              newMap[x][y] = 0;
+            }
+          });
+        });
+        m = newMap;
+        // renderMap(m, 10); // celluar sim
+      });
+      // renderMap(m, 15);
+
+      // Make walls
+      m[0] = Array(LEVEL_SIZE).fill(1);
+      // renderMap(m);
+      m[LEVEL_SIZE - 1] = Array(LEVEL_SIZE).fill(1);
+      // renderMap(m);
+      m.forEach(c => {
+        c[0] = 1;
+        c[LEVEL_SIZE - 1] = 1;
+        // renderMap(m);
+      });
+
+      return m;
+    };
+
+    const fullQueue = [];
+    let removeClosedRooms = m => {
+      let floodMap = squareArray(LEVEL_SIZE);
+      let queue = [];
+
+      floodMap[LEVEL_SIZE / 2][LEVEL_SIZE / 2] = 1;
+      queue.push({ x: LEVEL_SIZE / 2, y: LEVEL_SIZE / 2 });
+      fullQueue.push({ x: LEVEL_SIZE / 2, y: LEVEL_SIZE / 2 });
+      // renderFlood(LEVEL_SIZE / 2, LEVEL_SIZE / 2);
+
+      let markNeighbours = ({ x, y }) => {
+        [-1, 0, 1].forEach(i => {
+          [-1, 0, 1].forEach(j => {
+            if (i !== 0 && j !== 0) return;
+
+            let nx = x + i;
+            let ny = y + j;
+
+            if (
+              (nx >= 0 && ny >= 0 && nx < LEVEL_SIZE && ny < LEVEL_SIZE) &&
+                (m[nx][ny] === 0 && floodMap[nx][ny] === 0)
+            ) {
+              floodMap[nx][ny] = 1;
+              queue.push({ x: nx, y: ny });
+              fullQueue.push({ x: nx, y: ny });
+              // renderFlood(nx, ny);
+            }
+          });
+        });
+      };
+
+      while (queue.length) markNeighbours(queue.shift());
+      // renderFlood(LEVEL_SIZE / 2, LEVEL_SIZE / 2, 60);
+
+      repeat(LEVEL_SIZE, (y) => {
+        repeat(LEVEL_SIZE, (x) => {
+          if (m[x][y] === 0 && floodMap[x][y] === 0) {
+            m[x][y] = 1;
+            // renderMap(m, 1, fullQueue);
+          }
+        });
+      });
+    };
+
+
+
+      // Map generation
+    let m = celluarAutomata();
+
+    while (m[LEVEL_SIZE / 2][LEVEL_SIZE / 2] !== 0) m = celluarAutomata();
+
+    removeClosedRooms(m);
+
+    // renderMap(m, 60, fullQueue);
+    renderMap(m);
+
+    return m;
+  };
+
+  // generateLevel();
+
+  let currentC = 0;
+  let nextInc = 60;
+  const loop = () => {
+    gl.drawImage(renderQueue[currentC], 0, 0);
+
+    if (nextInc < 0) {
+      currentC += 1;
+      if (currentC >= renderQueue.length) currentC--;
+      nextInc = 60;
+      generateLevel();
+    }
+    nextInc--;
+
+    window.requestAnimationFrame(loop);
+  };
+
+  generateLevel();
+  loop();
+</script>
+</body>
